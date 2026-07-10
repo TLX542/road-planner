@@ -126,7 +126,7 @@ body {
   position: absolute;
   top: 1rem;
   left: 1rem;
-  width: min(360px, calc(100% - 2rem));
+  width: min(420px, calc(100% - 2rem));
   max-height: calc(100vh - 2rem);
   overflow: auto;
   display: grid;
@@ -140,6 +140,18 @@ body {
   border-radius: 1.25rem;
   box-shadow: var(--shadow);
   padding: 1rem 1.25rem 1.25rem;
+}
+
+.topIsland > *,
+.topIslandLeft > *,
+.resultsCard > * {
+  /* Grid items default to min-width: auto (shrink-to-fit their content),
+     which is exactly what let one unbreakable line of text force these
+     fixed-width floating panels to grow past their own width and scroll
+     horizontally instead of just wrapping like normal text. This lets any
+     child shrink below its content's natural width so long text always
+     wraps instead of overflowing the panel. */
+  min-width: 0;
 }
 
 .islandHeader {
@@ -536,10 +548,13 @@ input:disabled {
 
 .tallyInfoRow {
   position: relative;
-  display: flex;
+}
+
+.tallyValueWithInfo {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  white-space: nowrap;
 }
 
 .infoButton {

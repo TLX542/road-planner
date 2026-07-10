@@ -719,21 +719,26 @@ export default function Home() {
             ) : null}
             {totalNewScreensNoPooling > 0 ? (
               <p className="tallyInfoRow">
-                Total sans mutualisation entre agences : <strong>{totalNewScreensNoPooling}</strong>
-                <button
-                  type="button"
-                  className="infoButton"
-                  aria-label="Explication des deux totaux d'écrans neufs"
-                  aria-expanded={screenTotalsInfoOpen}
-                  onClick={() => setScreenTotalsInfoOpen((open) => !open)}
-                >
-                  i
-                </button>
+                Total sans mutualisation entre agences :{" "}
+                <span className="tallyValueWithInfo">
+                  <strong>{totalNewScreensNoPooling}</strong>
+                  <button
+                    type="button"
+                    className="infoButton"
+                    aria-label="Explication des deux totaux d'écrans neufs"
+                    aria-expanded={screenTotalsInfoOpen}
+                    onClick={() => setScreenTotalsInfoOpen((open) => !open)}
+                  >
+                    i
+                  </button>
+                </span>
                 {screenTotalsInfoOpen ? (
                   <span className="infoTooltip" role="note">
                     Le premier total suppose que les écrans usagés dépareillés d'une agence peuvent être appairés
-                    avec ceux d'une autre. Le deuxième calcule chaque agence indépendamment, pour le cas où vous
-                    n'apportez pas d'écrans d'une agence à l'autre.
+                    avec ceux d'une autre.
+                    <br />
+                    Le deuxième calcule chaque agence indépendamment, pour le cas où vous n'apportez pas d'écrans
+                    d'une agence à l'autre.
                   </span>
                 ) : null}
               </p>
@@ -801,7 +806,7 @@ export default function Home() {
               aria-pressed={agencyClickMode === "waypoint"}
               onClick={() => setAgencyClickMode((current) => (current === "waypoint" ? "visited" : "waypoint"))}
             >
-              📍 {agencyClickMode === "waypoint" ? "Ajouter comme étape" : "Basculer visité"}
+              📍 {agencyClickMode === "waypoint" ? "Clics sur la carte : ajouter comme étape" : "Clics sur la carte : basculer visité"}
             </button>
           </div>
         </header>
