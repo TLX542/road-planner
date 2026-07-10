@@ -132,6 +132,9 @@ export default function Home() {
   // fully open there regardless of class name.
   const [mobilePlannerOpen, setMobilePlannerOpen] = useState(false);
   const [mobileTallyOpen, setMobileTallyOpen] = useState(false);
+  // Whether the little "i" popover explaining the two new-screens totals
+  // (pooled vs. per-agency) is open.
+  const [screenTotalsInfoOpen, setScreenTotalsInfoOpen] = useState(false);
 
   const [agencies, setAgencies] = useState<AgencyMarker[]>([]);
   // Controls what clicking an agency marker on the map does: toggle its
@@ -715,15 +718,24 @@ export default function Home() {
               </p>
             ) : null}
             {totalNewScreensNoPooling > 0 ? (
-              <p>
+              <p className="tallyInfoRow">
                 Total sans mutualisation entre agences : <strong>{totalNewScreensNoPooling}</strong>
-              </p>
-            ) : null}
-            {totalNewScreensNoPooling !== totalNewScreens ? (
-              <p className="muted">
-                Le premier total suppose que les écrans usagés dépareillés d'une agence peuvent être appairés avec
-                ceux d'une autre. Celui-ci calcule chaque agence indépendamment, pour le cas où vous n'apportez pas
-                d'écrans d'une agence à l'autre.
+                <button
+                  type="button"
+                  className="infoButton"
+                  aria-label="Explication des deux totaux d'écrans neufs"
+                  aria-expanded={screenTotalsInfoOpen}
+                  onClick={() => setScreenTotalsInfoOpen((open) => !open)}
+                >
+                  i
+                </button>
+                {screenTotalsInfoOpen ? (
+                  <span className="infoTooltip" role="note">
+                    Le premier total suppose que les écrans usagés dépareillés d'une agence peuvent être appairés
+                    avec ceux d'une autre. Le deuxième calcule chaque agence indépendamment, pour le cas où vous
+                    n'apportez pas d'écrans d'une agence à l'autre.
+                  </span>
+                ) : null}
               </p>
             ) : null}
             {agencyNewScreensTally.length > 0 ? (

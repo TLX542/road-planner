@@ -532,6 +532,57 @@ input:disabled {
   margin-bottom: 0.5rem;
 }
 
+/* ---------- Inline "i" info button + popover (new-screens totals) ---------- */
+
+.tallyInfoRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.infoButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.infoButton:hover,
+.infoButton[aria-expanded="true"] {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.infoTooltip {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 900;
+  width: min(280px, 90vw);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  box-shadow: var(--shadow);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 /* ---------- Agency hover tooltips (screens from suivi_ecrans.xlsx) ---------- */
 
 .leaflet-tooltip.agencyTooltipWrapper {
