@@ -154,49 +154,84 @@ export default function Home() {
   //      render below the currently-scrolled-into-view area, it was simply
   //      cut off — the user had to scroll the *sheet* to reveal it.
   // Fixing both: compute the button's position with getBoundingClientRect,
-  // then place the popover with `position: fixed` in viewport coordinates
-  // — vertically centered on the button, horizontally anchored to the same
-  // left edge as before — and clamp both axes so it always stays fully
-  // inside the viewport regardless of screen size or scroll position.
+  // then place the popover with `position: fixed` in viewport coordinates.
+  // It's placed just below the button (never on top of it — otherwise it
+  // covers the one control that closes it), falling back to just above,
+  // and finally to whichever side has more room if it doesn't fully fit
+  // either way, clamped so it stays as legible as possible.
   useLayoutEffect(() => {
     if (!screenTotalsInfoOpen) {
       setInfoTooltipStyle(null);
       return;
     }
 
-    const updatePosition = () => {
+    const button = infoButtonRef.current;
+    if (!button) {
+      return;
+    }
+
+    const buttonRect = button.getBoundingClientRect();
+    const margin = 12;
+    const gap = 8;
+    const tooltipWidth = infoTooltipRef.current?.offsetWidth ?? Math.min(280, window.innerWidth * 0.9);
+    const tooltipHeight = infoTooltipRef.current?.offsetHeight ?? 0;
+
+    // Horizontal: same left edge as the button, clamped so it can't run
+    // off either side of the viewport.
+    let left = buttonRect.left;
+    left = Math.min(left, window.innerWidth - tooltipWidth - margin);
+    left = Math.max(left, margin);
+
+    // Vertical: prefer just below the button; if it doesn't fully fit
+    // there, try just above; if it fits fully in neither, use whichever
+    // side has more room and clamp to the viewport.
+    const spaceBelow = window.innerHeight - buttonRect.bottom - margin;
+    const spaceAbove = buttonRect.top - margin;
+
+    let top: number;
+    if (tooltipHeight <= spaceBelow) {
+      top = buttonRect.bottom + gap;
+    } else if (tooltipHeight <= spaceAbove) {
+      top = buttonRect.top - gap - tooltipHeight;
+    } else if (spaceBelow >= spaceAbove) {
+      top = Math.min(buttonRect.bottom + gap, window.innerHeight - tooltipHeight - margin);
+    } else {
+      top = Math.max(buttonRect.top - gap - tooltipHeight, margin);
+    }
+
+    setInfoTooltipStyle({ top, left });
+  }, [screenTotalsInfoOpen]);
+
+  // Closes the popover the instant the user interacts with anything else —
+  // clicking or tapping elsewhere (including on the popover's own text,
+  // which isn't interactive), typing, scrolling, or resizing the window.
+  // The "i" button itself is excluded so its own onClick can toggle the
+  // popover without this effect fighting it (both firing on the same
+  // click would otherwise cancel each other out: this closes it on
+  // pointerdown, then the button's click reopens it).
+  useEffect(() => {
+    if (!screenTotalsInfoOpen) {
+      return;
+    }
+
+    const closeUnlessButton = (event: Event) => {
       const button = infoButtonRef.current;
-      if (!button) {
+      if (button && event.target instanceof Node && button.contains(event.target)) {
         return;
       }
-
-      const buttonRect = button.getBoundingClientRect();
-      const margin = 12;
-      const tooltipWidth = infoTooltipRef.current?.offsetWidth ?? Math.min(280, window.innerWidth * 0.9);
-      const tooltipHeight = infoTooltipRef.current?.offsetHeight ?? 0;
-
-      let left = buttonRect.left;
-      left = Math.min(left, window.innerWidth - tooltipWidth - margin);
-      left = Math.max(left, margin);
-
-      let top = buttonRect.top + buttonRect.height / 2 - tooltipHeight / 2;
-      top = Math.min(top, window.innerHeight - tooltipHeight - margin);
-      top = Math.max(top, margin);
-
-      setInfoTooltipStyle({ top, left });
+      setScreenTotalsInfoOpen(false);
     };
 
-    updatePosition();
-
-    // Keep it glued to the button if the page is resized, or scrolled
-    // (capture: true so this fires for scrolling inside the bottom sheet,
-    // not just window-level scrolling).
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
+    document.addEventListener("pointerdown", closeUnlessButton, true);
+    document.addEventListener("keydown", closeUnlessButton, true);
+    window.addEventListener("scroll", closeUnlessButton, true);
+    window.addEventListener("resize", closeUnlessButton);
 
     return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
+      document.removeEventListener("pointerdown", closeUnlessButton, true);
+      document.removeEventListener("keydown", closeUnlessButton, true);
+      window.removeEventListener("scroll", closeUnlessButton, true);
+      window.removeEventListener("resize", closeUnlessButton);
     };
   }, [screenTotalsInfoOpen]);
 
