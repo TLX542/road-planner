@@ -849,7 +849,9 @@ export default function Home() {
                     Le deuxième calcule chaque agence indépendamment, pour le cas où vous n'apportez pas d'écrans
                     d'une agence à l'autre.
                     <br />
-                    <b>Les écrans autres que la marque IIYAMA ne sonts pas comptés pour la mutualisation</b>
+                    <b>Les écrans autres que la marque IIYAMA ne sonts pas comptés pour la mutualisation, 
+                      et sont considérés comme nécéssitant deux écrans neufs pour chaque écran usagé récupéré.
+                    </b>
                   </span>
                 ) : null}
               </p>
