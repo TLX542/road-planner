@@ -720,13 +720,19 @@ export default function Home() {
             {totalNewScreensNoPooling > 0 ? (
               <p className="tallyInfoRow">
                 Total sans mutualisation entre agences :{" "}
-                <span className="tallyValueWithInfo">
+                <span
+                  className="tallyValueWithInfo"
+                  onMouseEnter={() => setScreenTotalsInfoOpen(true)}
+                  onMouseLeave={() => setScreenTotalsInfoOpen(false)}
+                >
                   <strong>{totalNewScreensNoPooling}</strong>
                   <button
                     type="button"
                     className="infoButton"
                     aria-label="Explication des deux totaux d'écrans neufs"
                     aria-expanded={screenTotalsInfoOpen}
+                    onFocus={() => setScreenTotalsInfoOpen(true)}
+                    onBlur={() => setScreenTotalsInfoOpen(false)}
                     onClick={() => setScreenTotalsInfoOpen((open) => !open)}
                   >
                     i
