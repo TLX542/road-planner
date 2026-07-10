@@ -739,6 +739,8 @@ export default function Home() {
                     <br />
                     Le deuxième calcule chaque agence indépendamment, pour le cas où vous n'apportez pas d'écrans
                     d'une agence à l'autre.
+                    <br />
+                    <b>Les écrans autres que la marque IIYAMA ne sonts pas comptés pour la mutualisation</b>
                   </span>
                 ) : null}
               </p>
