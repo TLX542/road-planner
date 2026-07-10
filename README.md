@@ -1,80 +1,91 @@
 # Planificateur de Road Trip
 
-**Live app:** [road-planner-brown.vercel.app](https://road-planner-brown.vercel.app/)
+**Application en ligne :** [road-planner-brown.vercel.app](https://road-planner-brown.vercel.app/)
 
-A tool for planning multi-day work trips between agencies — built for screen
-installation/preparation rounds ("préparateur chantier double écrans"), but
-useful for any job that means visiting a list of sites in the most sensible
-order, over one or more days, by car.
+Un outil pour planifier des déplacements professionnels sur plusieurs jours
+entre différentes agences — conçu pour les tournées de préparation/
+installation d'écrans ("préparateur chantier double écrans"), mais utile
+pour tout métier qui consiste à visiter une liste de sites dans l'ordre le
+plus logique, sur une ou plusieurs journées, en voiture.
 
-It puts your stops on a map, works out driving legs and times between them,
-tracks which agencies you've already visited, and tallies up how many
-replacement screens you'll need to bring based on what's currently on the
-wall at each stop.
+L'outil place vos étapes sur une carte, calcule les trajets et temps de
+conduite entre elles, garde une trace des agences déjà visitées, et
+comptabilise le nombre d'écrans de remplacement à prévoir en fonction de ce
+qui est actuellement installé sur place à chaque étape.
 
-## What it does
+## Ce que fait l'outil
 
-- **Multi-day itineraries** — split a trip into as many days as you need,
-  each with its own list of stops and its own color on the map.
-- **Route calculation** — enter or search for addresses and the app works
-  out the driving legs between them (distance/time per leg).
-- **Agency markers on the map** — every known agency shows up as a colored
-  dot:
-  - 🟣 **Purple** — not yet visited
-  - 🟢 **Green** — already visited
-  - 🔵 **Blue** — currently part of the trip (added as a stop on any day)
-  Hover a marker to see its address, visited status, and the screens
-  currently installed there.
-- **Two ways to click a marker** (toggle in the header):
-  - **Ajouter comme étape** — clicking an agency adds it as the next stop
-    on the active day.
-  - **Basculer visité** — clicking an agency just flips its visited/not
-    visited status, without touching the itinerary.
-- **Screen tally** — for every agency currently used as a stop anywhere in
-  the trip, the app aggregates the screens on-site by brand/model and works
-  out how many new screens need to be brought, both trip-wide and per
-  agency.
-- **Light/dark mode**, with the map re-tinted to match.
-- **Works on mobile** — the map is full-screen by default; the planner and
-  screen-tally panels tuck away as swipe-up/down sheets so they're out of
-  the way until you need them.
+- **Itinéraires sur plusieurs jours** — découpez un trajet en autant de
+  journées que nécessaire, chacune avec sa propre liste d'étapes et sa
+  propre couleur sur la carte.
+- **Calcul d'itinéraire** — saisissez ou recherchez des adresses, et
+  l'application calcule les trajets de conduite entre elles (distance/temps
+  par trajet).
+- **Marqueurs d'agences sur la carte** — chaque agence connue apparaît sous
+  forme de point coloré :
+  - 🟣 **Violet** — pas encore visitée
+  - 🟢 **Vert** — déjà visitée
+  - 🔵 **Bleu** — fait actuellement partie du trajet (ajoutée comme étape sur
+    n'importe quel jour)
+  Survolez un marqueur pour voir son adresse, son statut de visite, et les
+  écrans actuellement installés sur place.
+- **Deux façons de cliquer sur un marqueur** (à basculer dans l'en-tête) :
+  - **Ajouter comme étape** — cliquer sur une agence l'ajoute comme
+    prochaine étape de la journée active.
+  - **Basculer visité** — cliquer sur une agence bascule simplement son
+    statut visité/non visité, sans toucher à l'itinéraire.
+- **Récapitulatif des écrans** — pour chaque agence actuellement utilisée
+  comme étape n'importe où dans le trajet, l'application regroupe les
+  écrans sur place par marque/modèle et calcule le nombre d'écrans neufs à
+  apporter, à la fois pour tout le trajet et par agence.
+- **Mode clair/sombre**, avec la carte re-teintée pour correspondre.
+- **Compatible mobile** — la carte occupe tout l'écran par défaut ; les
+  panneaux de planification et de récapitulatif des écrans se rangent sous
+  forme de tiroirs qu'on fait glisser vers le haut/bas, pour rester hors du
+  chemin tant qu'on n'en a pas besoin.
 
-## How to use it
+## Comment l'utiliser
 
-1. **Open the live app**: [road-planner-brown.vercel.app](https://road-planner-brown.vercel.app/)
-2. **Add your stops for Day 1**: type an address into a stop field and pick
-   it from the autocomplete suggestions, or click an agency marker on the
-   map (in "Ajouter comme étape" mode) to add it as the next stop.
-3. **Calculate the route**: hit the calculate button to draw the driving
-   legs on the map and see distance/time per leg.
-4. **Add more days** with the "+" tab if the trip spans multiple days —
-   each day gets its own tab and its own route color.
-5. **Check the screen tally**: once agencies are on your itinerary, the
-   left-hand (or, on mobile, top) panel shows the total screens by
-   brand/model and how many new units to bring, updated automatically as
-   you add or remove stops.
-6. **Mark agencies as visited** as you go, either by switching the click
-   mode to "Basculer visité" and tapping the marker, or from the
-   itinerary itself.
-7. **Toggle dark mode** from the button next to the theme switch in the
-   header if you're planning at night or just prefer it.
+1. **Ouvrez l'application en ligne** : [road-planner-brown.vercel.app](https://road-planner-brown.vercel.app/)
+2. **Ajoutez vos étapes pour le Jour 1** : saisissez une adresse dans un
+   champ d'étape et choisissez-la parmi les suggestions d'autocomplétion,
+   ou cliquez sur un marqueur d'agence sur la carte (en mode "Ajouter comme
+   étape") pour l'ajouter comme prochaine étape.
+3. **Calculez l'itinéraire** : appuyez sur le bouton de calcul pour tracer
+   les trajets de conduite sur la carte et voir la distance/le temps par
+   trajet.
+4. **Ajoutez d'autres jours** avec l'onglet « + » si le trajet s'étend sur
+   plusieurs journées — chaque jour a son propre onglet et sa propre
+   couleur d'itinéraire.
+5. **Consultez le récapitulatif des écrans** : dès que des agences figurent
+   dans votre itinéraire, le panneau (à gauche sur ordinateur, en haut sur
+   mobile) affiche le total des écrans par marque/modèle et le nombre
+   d'unités neuves à apporter, mis à jour automatiquement au fur et à
+   mesure que vous ajoutez ou retirez des étapes.
+6. **Marquez les agences comme visitées** au fil de la tournée, soit en
+   passant le mode de clic sur « Basculer visité » et en touchant le
+   marqueur, soit directement depuis l'itinéraire.
+7. **Basculez le mode sombre** depuis le bouton situé à côté du sélecteur
+   de thème dans l'en-tête, si vous planifiez de nuit ou si vous préférez
+   simplement ce mode.
 
-## Tech stack
+## Stack technique
 
 - [Next.js](https://nextjs.org/) (App Router) + TypeScript
-- [Leaflet](https://leafletjs.com/) for the map, with OpenStreetMap tiles
-- Deployed on [Vercel](https://vercel.com/)
+- [Leaflet](https://leafletjs.com/) pour la carte, avec des tuiles
+  OpenStreetMap
+- Déployé sur [Vercel](https://vercel.com/)
 
-## Running it locally
+## Lancer le projet en local
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
+Puis ouvrez [http://localhost:3000](http://localhost:3000).
 
 ```bash
-npm run build   # production build
-npm start       # run the production build locally
+npm run build   # build de production
+npm start       # lancer le build de production en local
 ```
