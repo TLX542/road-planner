@@ -331,6 +331,18 @@ export default function Home() {
     return rows.sort((a, b) => a.name.localeCompare(b.name));
   }, [selectedAgencyIds, agencies]);
 
+  // Same idea as totalNewScreens above, but without pooling old-screen
+  // counts across agencies first. totalNewScreens can pair an odd leftover
+  // at one agency with an odd leftover at another to shave off a new
+  // screen — which only works if you physically bring old screens between
+  // sites. This total assumes each agency is handled on its own (no moving
+  // screens between agencies), so it's simply the sum of the "Par agence"
+  // figures below and is always >= totalNewScreens.
+  const totalNewScreensNoPooling = useMemo(
+    () => agencyNewScreensTally.reduce((sum, agency) => sum + agency.newScreens, 0),
+    [agencyNewScreensTally],
+  );
+
   // Models where the pooled old-stock count is odd, so one old unit has no
   // old partner to pair with (see leftoverScreensForCount) — always 0 or 1
   // per model, e.g. seven of the same model leaves one leftover.
@@ -700,6 +712,18 @@ export default function Home() {
             {totalNewScreens > 0 ? (
               <p>
                 Total d'écrans neufs à préparer : <strong>{totalNewScreens}</strong>
+              </p>
+            ) : null}
+            {totalNewScreensNoPooling > 0 ? (
+              <p>
+                Total sans mutualisation entre agences : <strong>{totalNewScreensNoPooling}</strong>
+              </p>
+            ) : null}
+            {totalNewScreensNoPooling !== totalNewScreens ? (
+              <p className="muted">
+                Le premier total suppose que les écrans usagés dépareillés d'une agence peuvent être appairés avec
+                ceux d'une autre. Celui-ci calcule chaque agence indépendamment, pour le cas où vous n'apportez pas
+                d'écrans d'une agence à l'autre.
               </p>
             ) : null}
             {agencyNewScreensTally.length > 0 ? (
