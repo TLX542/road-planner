@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { TripMap, type AgencyClickMode, type AgencyMarker } from "@/components/trip-map";
@@ -135,6 +135,70 @@ export default function Home() {
   // Whether the little "i" popover explaining the two new-screens totals
   // (pooled vs. per-agency) is open.
   const [screenTotalsInfoOpen, setScreenTotalsInfoOpen] = useState(false);
+  // The "i" button that anchors the popover, and the popover itself. Both
+  // are measured in the layout effect below so the popover can be
+  // positioned with fixed (viewport) coordinates instead of being laid out
+  // relative to a scrolling ancestor — see that effect for why.
+  const infoButtonRef = useRef<HTMLButtonElement>(null);
+  const infoTooltipRef = useRef<HTMLSpanElement>(null);
+  const [infoTooltipStyle, setInfoTooltipStyle] = useState<{ top: number; left: number } | null>(null);
+
+  // The popover used to be `position: absolute` inside `.tallyInfoRow`,
+  // anchored to the top-left of that row. Two problems with that:
+  //   1. It always opened downward from the row, not centered on the "i"
+  //      button, so on a short popover it looked top-heavy.
+  //   2. `.tallyInfoRow` lives inside `.topIslandLeft` / `.resultsCard`,
+  //      which scroll (`overflow: auto`, see globals.css) on the mobile
+  //      bottom-sheet layout. An absolutely positioned descendant is
+  //      clipped to that scrolling box's bounds, so if the popover would
+  //      render below the currently-scrolled-into-view area, it was simply
+  //      cut off — the user had to scroll the *sheet* to reveal it.
+  // Fixing both: compute the button's position with getBoundingClientRect,
+  // then place the popover with `position: fixed` in viewport coordinates
+  // — vertically centered on the button, horizontally anchored to the same
+  // left edge as before — and clamp both axes so it always stays fully
+  // inside the viewport regardless of screen size or scroll position.
+  useLayoutEffect(() => {
+    if (!screenTotalsInfoOpen) {
+      setInfoTooltipStyle(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      const button = infoButtonRef.current;
+      if (!button) {
+        return;
+      }
+
+      const buttonRect = button.getBoundingClientRect();
+      const margin = 12;
+      const tooltipWidth = infoTooltipRef.current?.offsetWidth ?? Math.min(280, window.innerWidth * 0.9);
+      const tooltipHeight = infoTooltipRef.current?.offsetHeight ?? 0;
+
+      let left = buttonRect.left;
+      left = Math.min(left, window.innerWidth - tooltipWidth - margin);
+      left = Math.max(left, margin);
+
+      let top = buttonRect.top + buttonRect.height / 2 - tooltipHeight / 2;
+      top = Math.min(top, window.innerHeight - tooltipHeight - margin);
+      top = Math.max(top, margin);
+
+      setInfoTooltipStyle({ top, left });
+    };
+
+    updatePosition();
+
+    // Keep it glued to the button if the page is resized, or scrolled
+    // (capture: true so this fires for scrolling inside the bottom sheet,
+    // not just window-level scrolling).
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [screenTotalsInfoOpen]);
 
   const [agencies, setAgencies] = useState<AgencyMarker[]>([]);
   // Controls what clicking an agency marker on the map does: toggle its
@@ -720,26 +784,30 @@ export default function Home() {
             {totalNewScreensNoPooling > 0 ? (
               <p className="tallyInfoRow">
                 Total sans mutualisation entre agences :{" "}
-                <span
-                  className="tallyValueWithInfo"
-                  onMouseEnter={() => setScreenTotalsInfoOpen(true)}
-                  onMouseLeave={() => setScreenTotalsInfoOpen(false)}
-                >
+                <span className="tallyValueWithInfo">
                   <strong>{totalNewScreensNoPooling}</strong>
                   <button
                     type="button"
+                    ref={infoButtonRef}
                     className="infoButton"
                     aria-label="Explication des deux totaux d'écrans neufs"
                     aria-expanded={screenTotalsInfoOpen}
-                    onFocus={() => setScreenTotalsInfoOpen(true)}
-                    onBlur={() => setScreenTotalsInfoOpen(false)}
                     onClick={() => setScreenTotalsInfoOpen((open) => !open)}
                   >
                     i
                   </button>
                 </span>
                 {screenTotalsInfoOpen ? (
-                  <span className="infoTooltip" role="note">
+                  <span
+                    className="infoTooltip"
+                    role="note"
+                    ref={infoTooltipRef}
+                    style={
+                      infoTooltipStyle
+                        ? { top: infoTooltipStyle.top, left: infoTooltipStyle.left, visibility: "visible" }
+                        : { top: 0, left: 0, visibility: "hidden" }
+                    }
+                  >
                     Le premier total suppose que les écrans usagés dépareillés d'une agence peuvent être appairés
                     avec ceux d'une autre.
                     <br />
@@ -750,6 +818,7 @@ export default function Home() {
                   </span>
                 ) : null}
               </p>
+
             ) : null}
             {agencyNewScreensTally.length > 0 ? (
               <>

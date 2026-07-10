@@ -583,9 +583,13 @@ input:disabled {
 }
 
 .infoTooltip {
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  left: 0;
+  /* Position is set inline (top/left) from page.tsx, computed from the
+     button's actual on-screen position and clamped to the viewport. Fixed
+     (not absolute) so it isn't clipped by `.topIslandLeft` / `.resultsCard`,
+     which scroll on the mobile bottom-sheet layout — an absolutely
+     positioned popover living inside a scrolling ancestor gets cut off by
+     that ancestor's bounds instead of floating freely over the page. */
+  position: fixed;
   z-index: 900;
   width: min(280px, 90vw);
   background: var(--surface);
