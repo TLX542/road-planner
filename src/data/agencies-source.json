@@ -1,0 +1,2120 @@
+[
+  {
+    "name": "AMIENS",
+    "address": "90 Rue André Durouchez",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "Packard Bell",
+        "model": "Viseo 243D Abid",
+        "count": 1
+      }
+    ],
+    "id": "amiens"
+  },
+  {
+    "name": "ANGERS",
+    "address": "13 Rue Boisnet",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      }
+    ],
+    "id": "angers"
+  },
+  {
+    "name": "ARGENTAN",
+    "address": "3 Rue Pierre Mendès France",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 3
+      }
+    ],
+    "id": "argentan"
+  },
+  {
+    "name": "ARRAS",
+    "address": "49 Rue de Douai",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 2
+      }
+    ],
+    "id": "arras"
+  },
+  {
+    "name": "AUDINCOURT",
+    "address": "44 Rue de Valentigney",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "audincourt"
+  },
+  {
+    "name": "AUXERRE",
+    "address": "46 Boulevard Vaulabelle",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 1
+      },
+      {
+        "brand": "Philips",
+        "model": "273V5LHAB/00",
+        "count": 1
+      }
+    ],
+    "id": "auxerre"
+  },
+  {
+    "name": "AVIGNON",
+    "address": "1 Avenue Fontcouverte",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 1
+      }
+    ],
+    "id": "avignon"
+  },
+  {
+    "name": "BAR LE DUC",
+    "address": "12 Rue Ernest Bradfer",
+    "screens": [
+      {
+        "brand": "BenQ",
+        "model": "GL2250-T",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "bar-le-duc"
+  },
+  {
+    "name": "BEAUNE",
+    "address": "2 Route de Challanges",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      }
+    ],
+    "id": "beaune"
+  },
+  {
+    "name": "BEAUVAIS",
+    "address": "37 Rue de Clermont",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      }
+    ],
+    "id": "beauvais"
+  },
+  {
+    "name": "BELFORT",
+    "address": "5 Rue Jacqueline Auriol",
+    "screens": [
+      {
+        "brand": "BenQ",
+        "model": "GW2270H",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "belfort"
+  },
+  {
+    "name": "BESANCON",
+    "address": "14 Rue des Chaprais",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "besancon"
+  },
+  {
+    "name": "BLENOD",
+    "address": "166 Avenue Victor Claude",
+    "screens": [
+      {
+        "brand": "Philips",
+        "model": "226V4LAB/00",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "blenod"
+  },
+  {
+    "name": "BOULOGNE",
+    "address": "20 Place Navarin",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "N/A",
+        "model": "N/A",
+        "count": 1
+      }
+    ],
+    "id": "boulogne"
+  },
+  {
+    "name": "BOURG EN BRESSE",
+    "address": "68 Avenue de Parme",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "bourg-en-bresse"
+  },
+  {
+    "name": "CAEN",
+    "address": "1089 Boulevard Charles Cros",
+    "screens": [
+      {
+        "brand": "ACER",
+        "model": "KA240HQ Abid",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      }
+    ],
+    "id": "caen"
+  },
+  {
+    "name": "CAMBRAI",
+    "address": "5 Rue Cantimpre",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 3
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "cambrai"
+  },
+  {
+    "name": "CHALON SUR SAONE",
+    "address": "13 Avenue Jean Jaurès",
+    "screens": [
+      {
+        "brand": "HP",
+        "model": "CTT113",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "chalon-sur-saone"
+  },
+  {
+    "name": "CHALONS SUR CHAMPAGNE",
+    "address": "57 Rue Jean Jaurès",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      }
+    ],
+    "id": "chalons-sur-champagne"
+  },
+  {
+    "name": "CHAMPIGNEULLES",
+    "address": "7J Rue de Frouard",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "champigneulles"
+  },
+  {
+    "name": "CHARLEVILLE",
+    "address": "67 Avenue d'Arches",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 3
+      }
+    ],
+    "id": "charleville"
+  },
+  {
+    "name": "CHAUMONT",
+    "address": "59 Bis Avenue Carnot",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 3
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      }
+    ],
+    "id": "chaumont"
+  },
+  {
+    "name": "CHERBOURG",
+    "address": "63 Rue de la Paix",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 3
+      }
+    ],
+    "id": "cherbourg"
+  },
+  {
+    "name": "COLMAR",
+    "address": "13 Rue de la Bagatelle",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "colmar"
+  },
+  {
+    "name": "COMMERCY",
+    "address": "12 Place Charles de Gaulle",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 2
+      }
+    ],
+    "id": "commercy"
+  },
+  {
+    "name": "COMPIEGNE",
+    "address": "14 Rue du Fonds Pernant",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      }
+    ],
+    "id": "compiegne"
+  },
+  {
+    "name": "DARU",
+    "address": "14 Bis Rue Daru",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "daru"
+  },
+  {
+    "name": "DIEPPE",
+    "address": "174 Avenue de la République",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      }
+    ],
+    "id": "dieppe"
+  },
+  {
+    "name": "DIJON",
+    "address": "21 Rue du Transvaal",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      }
+    ],
+    "id": "dijon"
+  },
+  {
+    "name": "DOLE",
+    "address": "4 Rue Casimir de Persan",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 3
+      }
+    ],
+    "id": "dole"
+  },
+  {
+    "name": "EPERNAY",
+    "address": "3 Boulevard de la Motte",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 3
+      }
+    ],
+    "id": "epernay"
+  },
+  {
+    "name": "EPINAL",
+    "address": "93 Rue de Lorraine",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 4
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 2
+      }
+    ],
+    "id": "epinal"
+  },
+  {
+    "name": "EVREUX",
+    "address": "251 Rue Clément Ader",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 3
+      }
+    ],
+    "id": "evreux"
+  },
+  {
+    "name": "FRIVILLE",
+    "address": "3 Rue Henri Barbusse",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      }
+    ],
+    "id": "friville"
+  },
+  {
+    "name": "GENLIS",
+    "address": "2 Cours Martyrs de la Résistance",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "genlis"
+  },
+  {
+    "name": "GERARDMER",
+    "address": "59 Boulevard de Saint-Dié",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 3
+      },
+      {
+        "brand": "Philips",
+        "model": "223V5LSB2/10",
+        "count": 1
+      }
+    ],
+    "id": "gerardmer"
+  },
+  {
+    "name": "GRAY",
+    "address": "22 Avenue du Maréchal Lyautey",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 3
+      }
+    ],
+    "id": "gray"
+  },
+  {
+    "name": "GUEBWILLER",
+    "address": "26 Rue de la République",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "guebwiller"
+  },
+  {
+    "name": "HAGUENAU",
+    "address": "6 Boulevard de l'Europe",
+    "screens": [
+      {
+        "brand": "ACER",
+        "model": "K222HQL bd",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "haguenau"
+  },
+  {
+    "name": "HENIN-BEAUMONT",
+    "address": "151 Rue Pasteur",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      }
+    ],
+    "id": "henin-beaumont"
+  },
+  {
+    "name": "HERICOURT",
+    "address": "22 Bis Avenue Léon Jouhaux",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2483HS-B1",
+        "count": 3
+      }
+    ],
+    "id": "hericourt"
+  },
+  {
+    "name": "L ISLE SUR LE DOUBS",
+    "address": "10 Rue de la Velle",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 3
+      }
+    ],
+    "id": "l-isle-sur-le-doubs"
+  },
+  {
+    "name": "LA BASSEE",
+    "address": "21 Rue d'Estaires",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      }
+    ],
+    "id": "la-bassee"
+  },
+  {
+    "name": "LANGRES",
+    "address": "4 Boulevrd du Maréchal de Lattre de Tassigny",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2483HS-B5",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "langres"
+  },
+  {
+    "name": "LE CREUSOT",
+    "address": "18 Boulevard Henri Paul Schneider",
+    "screens": [
+      {
+        "brand": "BenQ",
+        "model": "GL2250-T",
+        "count": 1
+      },
+      {
+        "brand": "HP",
+        "model": "Compaq LE2202x BTM111",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      }
+    ],
+    "id": "le-creusot"
+  },
+  {
+    "name": "LE HAVRE",
+    "address": "99 Boulevard de Strasbourg",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "le-havre"
+  },
+  {
+    "name": "LILLE",
+    "address": "24 Rue Edouard Delesalle",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "lille"
+  },
+  {
+    "name": "LILLERS",
+    "address": "17 Rue du Maréchal de Lattre de Tassigny",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      }
+    ],
+    "id": "lillers"
+  },
+  {
+    "name": "LISIEUX",
+    "address": "27 Boulevard Jeanne d'Arc",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "lisieux"
+  },
+  {
+    "name": "LONGVIC",
+    "address": "6 Rue de Romelet",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "longvic"
+  },
+  {
+    "name": "LONS LE SAUNIER",
+    "address": "175 Route de Besançon",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2483HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "lons-le-saunier"
+  },
+  {
+    "name": "LOUHANS",
+    "address": "11 Rue d'Alsace",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 4
+      }
+    ],
+    "id": "louhans"
+  },
+  {
+    "name": "LOUVIERS",
+    "address": "13 Rue de la Fringale",
+    "screens": [
+      {
+        "brand": "BenQ",
+        "model": "GL2250-T",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "louviers"
+  },
+  {
+    "name": "LUNEVILLE",
+    "address": "38 Avenue du 2ème Bataillon de Chasseurs à Pied",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 3
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 1
+      }
+    ],
+    "id": "luneville"
+  },
+  {
+    "name": "LURE",
+    "address": "64 Avenue Carnot",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 4
+      }
+    ],
+    "id": "lure"
+  },
+  {
+    "name": "LUXEUIL LES BAINS",
+    "address": "12 Allée André Maroselli",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2483HSU-B1",
+        "count": 2
+      }
+    ],
+    "id": "luxeuil-les-bains"
+  },
+  {
+    "name": "LYON",
+    "address": "4 Avenue Félix Faure",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      }
+    ],
+    "id": "lyon"
+  },
+  {
+    "name": "MACON",
+    "address": "47 Rue Gambetta",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 2
+      }
+    ],
+    "id": "macon"
+  },
+  {
+    "name": "MAIZIERES LES METZ",
+    "address": "56 Grand Rue",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 5
+      }
+    ],
+    "id": "maizieres-les-metz"
+  },
+  {
+    "name": "MENEHOULD",
+    "address": "1 Place d'Austerlitz",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "menehould"
+  },
+  {
+    "name": "METZ",
+    "address": "215B Avenue de Strasbourg",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 2
+      }
+    ],
+    "id": "metz"
+  },
+  {
+    "name": "MIRAMAS",
+    "address": "38 Avenue de la République",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 1
+      }
+    ],
+    "id": "miramas"
+  },
+  {
+    "name": "MONTEREAU",
+    "address": "2 Boulevard de la République",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "montereau"
+  },
+  {
+    "name": "MONTIGNY",
+    "address": "35 Ter Avenue de Haute Meuse",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 3
+      }
+    ],
+    "id": "montigny"
+  },
+  {
+    "name": "MOULINS",
+    "address": "7 Route de Lyon",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 3
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "moulins"
+  },
+  {
+    "name": "MULHOUSE",
+    "address": "16 Rue de l'Île Napoléon",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "GE2488HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "mulhouse"
+  },
+  {
+    "name": "NANTES",
+    "address": "37 Route de Rennes",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 3
+      }
+    ],
+    "id": "nantes"
+  },
+  {
+    "name": "NEUFCHATEAU",
+    "address": "17 Bis Avenue de Herringen",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 3
+      }
+    ],
+    "id": "neufchateau"
+  },
+  {
+    "name": "OBERNAI",
+    "address": "33 Rue de Sélestat",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 4
+      }
+    ],
+    "id": "obernai"
+  },
+  {
+    "name": "PLOEMEUR",
+    "address": "11 Rue de Larmor",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "ploemeur"
+  },
+  {
+    "name": "PONTARLIER",
+    "address": "15 Rue Arthur Bourdin",
+    "screens": [
+      {
+        "brand": "HP",
+        "model": "CNT205C0N1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      }
+    ],
+    "id": "pontarlier"
+  },
+  {
+    "name": "RAON L ETAPE",
+    "address": "2 Rue Pasteur",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "raon-l-etape"
+  },
+  {
+    "name": "REDON",
+    "address": "47 Rue Notre Dame",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "redon"
+  },
+  {
+    "name": "REIMS",
+    "address": "59 Rue Gambetta",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      }
+    ],
+    "id": "reims"
+  },
+  {
+    "name": "REMIREMONT",
+    "address": "125 Rue Charles de Gaulle",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      }
+    ],
+    "id": "remiremont"
+  },
+  {
+    "name": "RENNES",
+    "address": "1 Rue Capitaine Dreyfus",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "rennes"
+  },
+  {
+    "name": "RIOZ",
+    "address": "2 Route de Sorans",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "rioz"
+  },
+  {
+    "name": "ROANNE",
+    "address": "119 Avenue de Paris",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 3
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "roanne"
+  },
+  {
+    "name": "ROMANS",
+    "address": "47 Avenue des Allobroges",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 2
+      }
+    ],
+    "id": "romans"
+  },
+  {
+    "name": "ROMILLY",
+    "address": "4 Rue Magenta",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 3
+      }
+    ],
+    "id": "romilly"
+  },
+  {
+    "name": "ROUEN",
+    "address": "12 Rue Maryse Bastie",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "rouen"
+  },
+  {
+    "name": "ROYE",
+    "address": "10 Rue d'Amiens",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "roye"
+  },
+  {
+    "name": "SAINT DIZIER",
+    "address": "230 Avenue de la République",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 1
+      }
+    ],
+    "id": "saint-dizier"
+  },
+  {
+    "name": "SAINT OMER",
+    "address": "44 Rue de Calais",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "saint-omer"
+  },
+  {
+    "name": "SAINT QUENTIN",
+    "address": "108 Rue Voltaire",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HSU-B6",
+        "count": 1
+      }
+    ],
+    "id": "saint-quentin"
+  },
+  {
+    "name": "SAINT QUENTIN FALLAVIER",
+    "address": "32 Rue de La Haye",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 3
+      }
+    ],
+    "id": "saint-quentin-fallavier"
+  },
+  {
+    "name": "SAINT VIT",
+    "address": "15 Rue de Besançon",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "saint-vit"
+  },
+  {
+    "name": "SAINT-ETIENNE",
+    "address": "30 Cours Fauriel",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      },
+      {
+        "brand": "Philips",
+        "model": "226V4LAB/00",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "saint-etienne"
+  },
+  {
+    "name": "SARREBOURG",
+    "address": "12 Avenue Raymond Poincaré",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 4
+      }
+    ],
+    "id": "sarrebourg"
+  },
+  {
+    "name": "SARREGUEMINES",
+    "address": "23 Rue Poincaré",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 3
+      }
+    ],
+    "id": "sarreguemines"
+  },
+  {
+    "name": "SAVERNE",
+    "address": "3 Rue du Moulin",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      }
+    ],
+    "id": "saverne"
+  },
+  {
+    "name": "SCHILTIGHEIM",
+    "address": "19 Rue de la Glacière",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 3
+      }
+    ],
+    "id": "schiltigheim"
+  },
+  {
+    "name": "SCHIRMECK",
+    "address": "117 Grand Rue",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 3
+      }
+    ],
+    "id": "schirmeck"
+  },
+  {
+    "name": "SEDAN",
+    "address": "13 Bis Rue Thiers",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 1
+      }
+    ],
+    "id": "sedan"
+  },
+  {
+    "name": "SELESTAT",
+    "address": "4 Rue de la Porte de Brisach",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "selestat"
+  },
+  {
+    "name": "SENS",
+    "address": "19 Boulevard du Pont Neuf",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      },
+      {
+        "brand": "LG",
+        "model": "24M45H-B",
+        "count": 1
+      }
+    ],
+    "id": "sens"
+  },
+  {
+    "name": "SERRIS",
+    "address": "2 Avenue Johannes Gutenberg",
+    "screens": [
+      {
+        "brand": "BenQ",
+        "model": "GL2250-T",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      }
+    ],
+    "id": "serris"
+  },
+  {
+    "name": "SEZANNE",
+    "address": "Route de Troyes",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 3
+      }
+    ],
+    "id": "sezanne"
+  },
+  {
+    "name": "SOISSONS",
+    "address": "26 Allée des Nobel",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6",
+        "count": 1
+      }
+    ],
+    "id": "soissons"
+  },
+  {
+    "name": "STRASBOURG",
+    "address": "2 Rue d'Urmatt",
+    "screens": [
+      {
+        "brand": "BenQ",
+        "model": "GL2250-T",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "Philips",
+        "model": "236V4LHAB/00",
+        "count": 1
+      }
+    ],
+    "id": "strasbourg"
+  },
+  {
+    "name": "TOUL",
+    "address": "651 Rue Guy Pernin",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "toul"
+  },
+  {
+    "name": "TROYES",
+    "address": "137 Ter Avenue Major Général Georges Vanier",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 4
+      }
+    ],
+    "id": "troyes"
+  },
+  {
+    "name": "VALDAHON",
+    "address": "15 Rue Charles Schmitt",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 4
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      }
+    ],
+    "id": "valdahon"
+  },
+  {
+    "name": "VALENCIENNES",
+    "address": "167 Avenue de Denain",
+    "screens": [
+      {
+        "brand": "HP",
+        "model": "ProDisplay P221 CTM111",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 6
+      }
+    ],
+    "id": "valenciennes"
+  },
+  {
+    "name": "VANDOEUVRE",
+    "address": "10 Boulevard Louis Barthou",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 3
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "vandoeuvre"
+  },
+  {
+    "name": "VEMARS",
+    "address": "2 Rue de la Mairie",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 3
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 1
+      }
+    ],
+    "id": "vemars"
+  },
+  {
+    "name": "VERDUN",
+    "address": "22 Avenue Maréchal Joffre",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 2
+      },
+      {
+        "brand": "ViewSonic",
+        "model": "VX3276-MHD-2",
+        "count": 1
+      }
+    ],
+    "id": "verdun"
+  },
+  {
+    "name": "VERNON",
+    "address": "15 Rue de la Garenne",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 1
+      }
+    ],
+    "id": "vernon"
+  },
+  {
+    "name": "VESOUL",
+    "address": "28 Boulevard des Alliés",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B5",
+        "count": 3
+      }
+    ],
+    "id": "vesoul"
+  },
+  {
+    "name": "VILLEFRANCHE",
+    "address": "84 Rue Henri Depagneux",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 3
+      }
+    ],
+    "id": "villefranche"
+  },
+  {
+    "name": "VITRY",
+    "address": "4 Rue du Pont",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HD-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "XUB2493HS-B6 A",
+        "count": 1
+      }
+    ],
+    "id": "vitry"
+  },
+  {
+    "name": "VITTEL",
+    "address": "15 Place des Francs",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1 A",
+        "count": 6
+      }
+    ],
+    "id": "vittel"
+  },
+  {
+    "name": "VOIRON",
+    "address": "12 Rue Guy Allard",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 3
+      }
+    ],
+    "id": "voiron"
+  },
+  {
+    "name": "VOUZIERS",
+    "address": "2 Place Carnot",
+    "screens": [
+      {
+        "brand": "DELL",
+        "model": "E2310Hc",
+        "count": 1
+      },
+      {
+        "brand": "IIYAMA",
+        "model": "E2482HS-B1",
+        "count": 2
+      }
+    ],
+    "id": "vouziers"
+  }
+]
