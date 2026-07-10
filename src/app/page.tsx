@@ -352,7 +352,7 @@ export default function Home() {
   const leftoverScreensTally = useMemo(
     () =>
       screenTally
-        .map((item) => ({ ...item, leftover: leftoverScreensForCount(item.count) }))
+        .map((item) => ({ ...item, leftover: leftoverScreensForCount(item.count, item.brand) }))
         .filter((item) => item.leftover > 0),
     [screenTally],
   );
@@ -696,7 +696,7 @@ export default function Home() {
             <h2>Écrans pour l'ensemble du road trip</h2>
             <ul className="screenTallyList">
               {screenTally.map((item) => {
-                const newNeeded = newScreensNeededForCount(item.count);
+                const newNeeded = newScreensNeededForCount(item.count, item.brand);
                 return (
                   <li key={`${item.brand}-${item.model}`}>
                     {item.brand} {item.model}
