@@ -380,13 +380,15 @@ export default function Home() {
   // and an agency that shows up again on a *different* day (e.g. it's the
   // shared hinge point between Day 1's arrival and Day 2's departure) —
   // either way it's the same physical set of screens on the wall, counted
-  // once.
+  // once. Visited agencies are excluded too: once a stop has actually been
+  // handled, its screens are no longer "still to prepare" and shouldn't
+  // inflate the totals below.
   const screenTally = useMemo(() => {
     const tally = new Map<string, { brand: string; model: string; count: number }>();
 
     selectedAgencyIds.forEach((agencyId) => {
       const agency = agencies.find((candidate) => candidate.id === agencyId);
-      if (!agency) {
+      if (!agency || agency.visited) {
         return;
       }
 
@@ -413,13 +415,14 @@ export default function Home() {
 
   // Same new-screens math, but broken down per agency instead of pooled
   // across the whole trip — so e.g. "Montigny — 6 écrans neufs" is visible
-  // alongside the road-trip-wide total above.
+  // alongside the road-trip-wide total above. Visited agencies are skipped
+  // here too, for the same reason as screenTally above.
   const agencyNewScreensTally = useMemo(() => {
     const rows: { id: string; name: string; newScreens: number }[] = [];
 
     selectedAgencyIds.forEach((agencyId) => {
       const agency = agencies.find((candidate) => candidate.id === agencyId);
-      if (!agency) {
+      if (!agency || agency.visited) {
         return;
       }
 
