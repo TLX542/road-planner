@@ -721,7 +721,7 @@ input:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50% 50% 50% 4px;
+  border-radius: 50%;
   background: #f59e0b;
   color: #ffffff;
   border: 2px solid #b45309;
