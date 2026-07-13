@@ -2,7 +2,14 @@
 
 import { useEffect, useRef } from "react";
 
-import { newScreensNeededForCount, totalNewScreensNeeded, splitInstalledAndStockCount, withoutKnownStock } from "@/lib/screen-math";
+import {
+  newScreensNeededForCount,
+  totalNewScreensNeeded,
+  splitInstalledAndStockCount,
+  withoutKnownStock,
+  newScreensNeededForHs,
+  totalNewScreensNeededForHs,
+} from "@/lib/screen-math";
 
 type Coordinate = { lat: number; lon: number };
 
@@ -98,8 +105,16 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
     .map((screen) => {
       const label = `${escapeHtml(screen.brand)} ${escapeHtml(screen.model)}`;
       const suffix = screen.count > 1 ? ` &times;${screen.count}` : "";
-      const { installedCount, stockCount, hsCount } = splitInstalledAndStockCount(agency.name, screen);
-      const newNeeded = newScreensNeededForCount(installedCount, screen.brand);
+      const { installedCount, stockCount, hsCount, hsNeedingReplacementCount } = splitInstalledAndStockCount(
+        agency.name,
+        screen,
+      );
+      // Regular installed-pairing need, PLUS a matching new pair for any
+      // HS unit of this screen flagged `needsReplacement: true` — mirrors
+      // how agencyNewScreensTally/totalNewScreens combine the two in
+      // page.tsx, so the tooltip's per-line figure doesn't undercount.
+      const newNeeded =
+        newScreensNeededForCount(installedCount, screen.brand) + newScreensNeededForHs(hsNeedingReplacementCount);
       const newNeededHtml = newNeeded > 0 ? ` <span class="agencyTooltipNew">+${newNeeded} neuf${newNeeded > 1 ? "s" : ""}</span>` : "";
       // Known unused stock (see lib/screen-math.ts) never needs a new
       // screen, but it's still worth flagging on the marker so it's clear
@@ -107,8 +122,19 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
       const stockHtml = stockCount > 0 ? ` <span class="agencyTooltipStock">${stockCount} en stock</span>` : "";
       // Known HS/broken units get their own distinct (danger-colored) badge
       // — unlike stock, they're never a candidate for pairing/redeployment,
-      // just a straightforward "pick this up" flag.
-      const hsHtml = hsCount > 0 ? ` <span class="agencyTooltipHs">${hsCount} HS</span>` : "";
+      // just a straightforward "pick this up" flag. Units flagged
+      // `needsReplacement: true` get an extra sub-badge, matching the "à
+      // remplacer" badge in page.tsx's leftoverScreensTally list.
+      const hsHtml =
+        hsCount > 0
+          ? ` <span class="agencyTooltipHs">${hsCount} HS</span>${
+              hsNeedingReplacementCount > 0
+                ? ` <span class="agencyTooltipHs agencyTooltipHsReplace">${
+                    hsNeedingReplacementCount === hsCount ? "à remplacer" : `${hsNeedingReplacementCount} à remplacer`
+                  }</span>`
+                : ""
+            }`
+          : "";
       return `<li>${label}${suffix}${newNeededHtml}${stockHtml}${hsHtml}</li>`;
     })
     .join("");
@@ -130,7 +156,9 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
           : "Cliquez sur le marqueur pour ajouter un commentaire"
         : "Cliquez sur le marqueur pour basculer visité";
 
-  const totalNew = totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens));
+  const totalNew =
+    totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens)) +
+    totalNewScreensNeededForHs(agency.name, agency.screens);
   const totalNewHtml =
     totalNew > 0 ? `<span class="agencyTooltipNewTotal">${totalNew} écran${totalNew > 1 ? "s" : ""} neuf${totalNew > 1 ? "s" : ""} nécessaire${totalNew > 1 ? "s" : ""}</span>` : "";
 

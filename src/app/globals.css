@@ -824,6 +824,18 @@ input:disabled {
   font-size: 0.8em;
 }
 
+/* Modifier for HS units flagged `needsReplacement: true` in
+   lib/screen-math.ts — same idea as .hsBadgeReplace in the sidebar list:
+   a different (warning, not danger) color so "HS" + this reads as "also
+   needs a fresh matching pair", not just "retire this". */
+.agencyTooltipHsReplace {
+  color: #92400e;
+}
+
+[data-theme="dark"] .agencyTooltipHsReplace {
+  color: #fcd34d;
+}
+
 .agencyTooltipNewTotal {
   display: inline-block;
   width: fit-content;
