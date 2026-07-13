@@ -390,9 +390,23 @@ button:focus-visible {
   border-color: var(--primary);
 }
 
-.agencyModeToggle.active {
+/* Three modes, three colors, so the button always signals its current
+   behavior at a glance rather than just an on/off "active" state. */
+.agencyModeToggle.mode-waypoint {
   background: var(--primary);
   border-color: var(--primary);
+  color: #fff;
+}
+
+.agencyModeToggle.mode-visited {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.agencyModeToggle.mode-comment {
+  background: #7c3aed;
+  border-color: #7c3aed;
   color: #fff;
 }
 
@@ -776,6 +790,18 @@ input:disabled {
   color: var(--primary-strong);
 }
 
+.agencyTooltipComment {
+  display: block;
+  background: var(--surface-alt);
+  color: var(--text);
+  border-radius: 0.4rem;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.78rem;
+  font-style: italic;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 .agencyTooltipHint {
   font-size: 0.72rem;
   color: var(--muted);
@@ -814,6 +840,13 @@ input:disabled {
   box-shadow: 0 0 0 3px #1d4ed8, 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
+/* Independent of .selected above — a dashed outline flags "has a saved
+   comment" regardless of whether it's also currently on the route. */
+.agencyHqMarker.hasComment {
+  outline: 2px dashed #7c3aed;
+  outline-offset: 2px;
+}
+
 .agencyTooltipHq {
   display: inline-block;
   width: fit-content;
@@ -828,6 +861,118 @@ input:disabled {
 [data-theme="dark"] .agencyTooltipHq {
   background: #78350f;
   color: #fde68a;
+}
+
+/* ---------- Agency comment modal ("comment" click mode) ---------- */
+
+.commentModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 24, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1200;
+}
+
+.commentModal {
+  width: min(420px, 100%);
+  max-height: min(80vh, 560px);
+  overflow-y: auto;
+  display: grid;
+  gap: 0.65rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.commentModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.commentModalHeader h2 {
+  font-size: 1.05rem;
+}
+
+.commentModalAddress {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.commentModalClose {
+  flex: 0 0 auto;
+  width: 1.8rem;
+  height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.commentModalClose:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.commentModalTextarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.commentModalTextarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.commentModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.commentModalActions button {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.commentModalActions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.commentModalSave {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
 }
 
 /* ---------- Mobile bottom sheets ---------- */

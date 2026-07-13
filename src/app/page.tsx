@@ -119,6 +119,20 @@ function getLegColor(dayIndex: number, legIndex: number, legCount: number): stri
   return `hsl(${hue}, 68%, ${lightness}%)`;
 }
 
+// The order the single toggle button cycles through on each click.
+const AGENCY_CLICK_MODES: AgencyClickMode[] = ["waypoint", "visited", "comment"];
+
+function nextAgencyClickMode(mode: AgencyClickMode): AgencyClickMode {
+  const index = AGENCY_CLICK_MODES.indexOf(mode);
+  return AGENCY_CLICK_MODES[(index + 1) % AGENCY_CLICK_MODES.length];
+}
+
+const AGENCY_CLICK_MODE_LABEL: Record<AgencyClickMode, string> = {
+  waypoint: "📍 Ajouter comme étape",
+  visited: "✅ Basculer visité",
+  comment: "💬 Ajouter un commentaire",
+};
+
 export default function Home() {
   const [days, setDays] = useState<DayPlan[]>(() => [createDay("Jour 1")]);
   const [activeDayId, setActiveDayId] = useState<string>(() => days[0].id);
@@ -236,10 +250,19 @@ export default function Home() {
   }, [screenTotalsInfoOpen]);
 
   const [agencies, setAgencies] = useState<AgencyMarker[]>([]);
-  // Controls what clicking an agency marker on the map does: toggle its
-  // visited flag (default) or insert it as the earliest waypoint on the
-  // active day. Toggled via the small button under "+ Add waypoint".
+  // Controls what clicking an agency marker on the map does: insert it as
+  // the earliest waypoint on the active day, toggle its visited flag, or
+  // open the comment editor below. Cycled via the single header button.
   const [agencyClickMode, setAgencyClickMode] = useState<AgencyClickMode>("waypoint");
+
+  // Which agency's comment popup is open (null = closed), the text
+  // currently being edited, and save state for that popup. Kept separate
+  // from `agencies` itself so typing in the textarea doesn't need a round
+  // trip through the agencies array on every keystroke.
+  const [commentAgencyId, setCommentAgencyId] = useState<string | null>(null);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [commentSaving, setCommentSaving] = useState(false);
+  const [commentSaveError, setCommentSaveError] = useState("");
 
   // Sync with the theme the inline layout script already applied, without
   // fighting SSR (see layout.tsx for the pre-hydration script).
@@ -312,6 +335,62 @@ export default function Home() {
         });
     },
     [agencies],
+  );
+
+  // Opens the comment popup for an agency, seeding the draft with whatever
+  // is currently saved for it (empty string if there's nothing yet).
+  const openCommentEditor = useCallback(
+    (agencyId: string) => {
+      const target = agencies.find((agency) => agency.id === agencyId);
+      setCommentAgencyId(agencyId);
+      setCommentDraft(target?.comment ?? "");
+      setCommentSaveError("");
+    },
+    [agencies],
+  );
+
+  const closeCommentEditor = useCallback(() => {
+    setCommentAgencyId(null);
+    setCommentDraft("");
+    setCommentSaveError("");
+  }, []);
+
+  // Same optimistic-update-with-rollback shape as toggleAgencyVisited
+  // above, persisted to the same shared Redis instance so a comment left by
+  // whoever's on the road shows up for everyone else too.
+  const saveAgencyComment = useCallback(
+    (agencyId: string, comment: string) => {
+      const previous = agencies.find((agency) => agency.id === agencyId)?.comment ?? "";
+      const trimmed = comment.trim();
+
+      setAgencies((current) =>
+        current.map((agency) => (agency.id === agencyId ? { ...agency, comment: trimmed } : agency)),
+      );
+      setCommentSaving(true);
+      setCommentSaveError("");
+
+      fetch(`/api/agencies/${encodeURIComponent(agencyId)}/comment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: trimmed }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Échec de l'enregistrement du commentaire.");
+          }
+          closeCommentEditor();
+        })
+        .catch(() => {
+          setAgencies((current) =>
+            current.map((agency) => (agency.id === agencyId ? { ...agency, comment: previous } : agency)),
+          );
+          setCommentSaveError("Échec de l'enregistrement du commentaire. Veuillez réessayer.");
+        })
+        .finally(() => {
+          setCommentSaving(false);
+        });
+    },
+    [agencies, closeCommentEditor],
   );
 
   const toggleTheme = () => {
@@ -602,11 +681,13 @@ export default function Home() {
     (agency: AgencyMarker) => {
       if (agencyClickMode === "waypoint") {
         addAgencyAsEarliestWaypoint(agency);
-      } else {
+      } else if (agencyClickMode === "visited") {
         toggleAgencyVisited(agency.id);
+      } else {
+        openCommentEditor(agency.id);
       }
     },
-    [agencyClickMode, addAgencyAsEarliestWaypoint, toggleAgencyVisited],
+    [agencyClickMode, addAgencyAsEarliestWaypoint, toggleAgencyVisited, openCommentEditor],
   );
 
   // Every fetchTrip call re-geocodes all stops from scratch and can take a
@@ -1026,11 +1107,11 @@ export default function Home() {
             </button>
             <button
               type="button"
-              className={`agencyModeToggle${agencyClickMode === "waypoint" ? " active" : ""}`}
-              aria-pressed={agencyClickMode === "waypoint"}
-              onClick={() => setAgencyClickMode((current) => (current === "waypoint" ? "visited" : "waypoint"))}
+              className={`agencyModeToggle mode-${agencyClickMode}`}
+              aria-label={`Mode de clic sur les agences : ${AGENCY_CLICK_MODE_LABEL[agencyClickMode]}. Cliquer pour changer de mode.`}
+              onClick={() => setAgencyClickMode((current) => nextAgencyClickMode(current))}
             >
-              📍 {agencyClickMode === "waypoint" ? "Ajouter comme étape" : "Basculer visité"}
+              {AGENCY_CLICK_MODE_LABEL[agencyClickMode]}
             </button>
           </div>
         </header>
@@ -1210,6 +1291,68 @@ export default function Home() {
           </section>
         ) : null}
       </div>
+
+      {commentAgencyId
+        ? (() => {
+            const agency = agencies.find((candidate) => candidate.id === commentAgencyId);
+            if (!agency) {
+              return null;
+            }
+
+            return (
+              <div className="commentModalBackdrop" onClick={closeCommentEditor}>
+                <div
+                  className="commentModal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="commentModalTitle"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="commentModalHeader">
+                    <div>
+                      <h2 id="commentModalTitle">{agency.name}</h2>
+                      <p className="commentModalAddress">{agency.address}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="commentModalClose"
+                      aria-label="Fermer"
+                      onClick={closeCommentEditor}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <textarea
+                    className="commentModalTextarea"
+                    value={commentDraft}
+                    onChange={(event) => setCommentDraft(event.target.value)}
+                    placeholder="Ajoutez des infos ou un commentaire pour cette agence…"
+                    rows={5}
+                    autoFocus
+                    disabled={commentSaving}
+                  />
+
+                  {commentSaveError ? <p className="error">{commentSaveError}</p> : null}
+
+                  <div className="commentModalActions">
+                    <button type="button" onClick={closeCommentEditor} disabled={commentSaving}>
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      className="commentModalSave"
+                      onClick={() => saveAgencyComment(agency.id, commentDraft)}
+                      disabled={commentSaving}
+                    >
+                      {commentSaving ? "Enregistrement…" : "Enregistrer"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()
+        : null}
     </div>
   );
 }

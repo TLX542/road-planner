@@ -27,9 +27,12 @@ export type AgencyMarker = {
   lon: number;
   screens: AgencyMarkerScreen[];
   visited: boolean;
+  // Free-text note for this agency (gate codes, contact names, anything
+  // worth remembering). Empty string/undefined means "no comment yet".
+  comment?: string;
 };
 
-export type AgencyClickMode = "visited" | "waypoint";
+export type AgencyClickMode = "visited" | "waypoint" | "comment";
 
 type TripMapProps = {
   routes: MapRoute[];
@@ -72,6 +75,13 @@ const HOUSE_ICON_SVG = `
   </svg>
 `;
 
+// Keeps the hover tooltip compact even for a long comment — the full text
+// is always available in the comment mode popup, this is just a preview.
+function truncateForTooltip(value: string, maxLength = 140): string {
+  const trimmed = value.trim();
+  return trimmed.length > maxLength ? `${trimmed.slice(0, maxLength - 1)}…` : trimmed;
+}
+
 // Escapes text dropped into a Leaflet tooltip's HTML string so agency/screen
 // names can never break out of the markup they're rendered into.
 function escapeHtml(value: string): string {
@@ -103,8 +113,18 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
     ? `<span class="agencyTooltipStatus visited">&#10003; Visitée</span>`
     : `<span class="agencyTooltipStatus">Non visitée</span>`;
 
+  const commentHtml = agency.comment?.trim()
+    ? `<span class="agencyTooltipComment">💬 ${escapeHtml(truncateForTooltip(agency.comment))}</span>`
+    : "";
+
   const hintText =
-    mode === "waypoint" ? "Cliquez sur le marqueur pour l'ajouter comme prochaine étape" : "Cliquez sur le marqueur pour basculer visité";
+    mode === "waypoint"
+      ? "Cliquez sur le marqueur pour l'ajouter comme prochaine étape"
+      : mode === "comment"
+        ? agency.comment?.trim()
+          ? "Cliquez sur le marqueur pour modifier le commentaire"
+          : "Cliquez sur le marqueur pour ajouter un commentaire"
+        : "Cliquez sur le marqueur pour basculer visité";
 
   const totalNew = totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens));
   const totalNewHtml =
@@ -122,6 +142,7 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
       ${statusHtml}
       <ul class="agencyTooltipScreens">${screensHtml}</ul>
       ${totalNewHtml}
+      ${commentHtml}
       <span class="agencyTooltipHint">${hintText}</span>
     </div>
   `;
@@ -220,9 +241,10 @@ export function TripMap({
         // its visited/selected state. It still uses L.marker (not
         // circleMarker) since divIcon needs a regular marker to attach to.
         if (isHeadquarters(agency)) {
+          const hasComment = Boolean(agency.comment?.trim());
           const hqIcon = L.divIcon({
             className: "agencyHqIconWrapper",
-            html: `<div class="agencyHqMarker${isSelected ? " selected" : ""}">${HOUSE_ICON_SVG}</div>`,
+            html: `<div class="agencyHqMarker${isSelected ? " selected" : ""}${hasComment ? " hasComment" : ""}">${HOUSE_ICON_SVG}</div>`,
             iconSize: [30, 30],
             iconAnchor: [15, 26],
             tooltipAnchor: [0, -22],
@@ -273,7 +295,14 @@ export function TripMap({
                 fillOpacity: 0.85,
               };
 
-        const marker = L.circleMarker([agency.lat, agency.lon], style);
+        // A dashed ring is layered on top of (not instead of) the
+        // visited/selected color above — the two states are independent,
+        // so a marker can be both "visited" and "has a comment" at once.
+        const hasComment = Boolean(agency.comment?.trim());
+        const marker = L.circleMarker([agency.lat, agency.lon], {
+          ...style,
+          dashArray: hasComment ? "3,3" : undefined,
+        });
 
         marker.bindTooltip(buildAgencyTooltipHtml(agency, agencyClickMode, isSelected), {
           direction: "top",

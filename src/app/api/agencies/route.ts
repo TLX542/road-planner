@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getGeocodedAgencies } from "@/lib/agencies-data";
-import { getVisitedAgencyIds } from "@/lib/visited-agencies";
+import { getAgencyComments, getVisitedAgencyIds } from "@/lib/visited-agencies";
 
 export async function GET() {
   // Pure in-memory read of static, build-time data — no network or
@@ -10,20 +10,25 @@ export async function GET() {
   // how data/agency-coordinates.json gets populated).
   const geocodedAgencies = getGeocodedAgencies();
 
-  // Visited state is the one bit of data that *does* need to be shared and
-  // permanent across everyone who loads the site, so it lives in Vercel KV
-  // rather than in the static build-time files above.
+  // Visited state and free-text comments are the bits of data that *do*
+  // need to be shared and permanent across everyone who loads the site, so
+  // they live in Vercel KV (Redis) rather than in the static build-time
+  // files above. Fetched together and defaulted together on failure so one
+  // Redis hiccup can't leave the page half-populated.
   let visitedIds: Set<string>;
+  let comments: Map<string, string>;
   try {
-    visitedIds = await getVisitedAgencyIds();
+    [visitedIds, comments] = await Promise.all([getVisitedAgencyIds(), getAgencyComments()]);
   } catch (error) {
-    console.error("[GET /api/agencies] failed to load visited state:", error);
+    console.error("[GET /api/agencies] failed to load visited/comment state:", error);
     visitedIds = new Set();
+    comments = new Map();
   }
 
   const agencies = geocodedAgencies.map((agency) => ({
     ...agency,
     visited: visitedIds.has(agency.id),
+    comment: comments.get(agency.id) ?? "",
   }));
 
   return NextResponse.json({ agencies }, { status: 200 });
