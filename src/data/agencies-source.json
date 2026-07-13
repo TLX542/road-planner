@@ -1205,7 +1205,7 @@
     "screens": [
       {
         "brand": "IIYAMA",
-        "model": "GE2488HS-B1",
+        "model": "GE2488HS-B1 A",
         "count": 1
       },
       {
@@ -2111,5 +2111,22 @@
       }
     ],
     "id": "vouziers"
+  },
+  {
+    "name": "ESCH",
+    "address": "Rue Du Canal 10, 4050 Esch Sur Alzette",
+    "screens": [
+      {
+        "brand": "IIYAMA",
+        "model": "X2481HS-B1",
+        "count": 3
+      },
+      {
+        "brand": "DELL",
+        "model": "P2212Hb",
+        "count": 1
+      }
+    ],
+    "id": "esch"
   }
 ]
