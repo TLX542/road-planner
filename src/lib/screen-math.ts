@@ -64,6 +64,36 @@ export function leftoverScreensForCount(count: number, brand?: string): number {
   return count % 2;
 }
 
+// Known unused stock (see KNOWN_UNUSED_STOCK below) is never installed
+// anywhere, so it never needs a brand-new matching pair of its own — that
+// part of leftoverScreensForCount's exclusion from newScreensNeededForCount
+// stays untouched. But a spare IIYAMA screen sitting in one agency's stock
+// room is still an identical unit that CAN physically travel to pair with a
+// stranded installed leftover at another agency (two identical old screens
+// are a redeployable pair regardless of which site they each started out
+// at). Once paired that way, neither unit is genuinely "surplus with
+// nowhere to go" any more, so both drop out of the surplus tally — even
+// though, practically, both still need to be physically retrieved during a
+// visit.
+//
+// Non-IIYAMA stock never pairs with anything (same reasoning as
+// leftoverScreensForCount) and always stays fully surplus.
+//
+// `installedCount` / `stockCount` should already be pooled across every
+// agency in scope for the model, so this mirrors the existing cross-agency
+// pooling that newScreensNeededForCount benefits from — it just extends
+// that pooling to stock as well as installed units.
+export function combinedLeftoverForModel(installedCount: number, stockCount: number, brand?: string): number {
+  const safeInstalledCount = Number.isFinite(installedCount) && installedCount > 0 ? installedCount : 0;
+  const safeStockCount = Number.isFinite(stockCount) && stockCount > 0 ? stockCount : 0;
+
+  if (brand !== undefined && !isRedeployableBrand(brand)) {
+    return safeInstalledCount + safeStockCount;
+  }
+
+  return (safeInstalledCount + safeStockCount) % 2;
+}
+
 // ---------------------------------------------------------------------
 // Known unused stock
 // ---------------------------------------------------------------------

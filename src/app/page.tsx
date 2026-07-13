@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { TripMap, type AgencyClickMode, type AgencyMarker } from "@/components/trip-map";
-import { newScreensNeededForCount, leftoverScreensForCount, totalNewScreensNeeded, splitInstalledAndStockCount, withoutKnownStock } from "@/lib/screen-math";
+import { newScreensNeededForCount, combinedLeftoverForModel, totalNewScreensNeeded, splitInstalledAndStockCount, withoutKnownStock } from "@/lib/screen-math";
 
 type TripLeg = {
   from: string;
@@ -457,17 +457,21 @@ export default function Home() {
     [agencyNewScreensTally],
   );
 
-  // Models where either the pooled old-stock count is odd (see
-  // leftoverScreensForCount — one old unit with no partner to pair with)
-  // or there's known unused stock at an agency for that model. Either way
-  // these are units to physically retrieve that don't factor into the
-  // new-screens totals above.
+  // Models where, after letting a stranded installed leftover pair up with
+  // any known unused stock of the same (brand, model) — see
+  // combinedLeftoverForModel — there's still an odd one out (IIYAMA) or any
+  // non-IIYAMA old unit left (never pairs). These are units to physically
+  // retrieve that don't factor into the new-screens totals above. Stock
+  // that does find a leftover to pair with (or another stock unit of the
+  // same model) is no longer "surplus with nowhere to go," so it drops out
+  // of this list even though it — and its new pair-mate — still need to be
+  // physically picked up.
   const leftoverScreensTally = useMemo(
     () =>
       screenTally
         .map((item) => ({
           ...item,
-          leftover: leftoverScreensForCount(item.count, item.brand) + item.stockCount,
+          leftover: combinedLeftoverForModel(item.count, item.stockCount, item.brand),
         }))
         .filter((item) => item.leftover > 0),
     [screenTally],
@@ -955,7 +959,9 @@ export default function Home() {
                     Les agences marquées comme visitées ne sont plus comptées dans ces totaux.
                     <br />
                     Certains écrans connus comme étant en stock (non installés) sont exclus des écrans neufs à
-                    préparer, mais restent comptés dans les écrans en surplus à récupérer.
+                    préparer. S'ils peuvent former une paire avec un écran usagé dépareillé d'une autre agence (ou
+                    entre eux), ils ne comptent plus non plus comme surplus — même s'ils restent à récupérer sur
+                    place.
                   </span>
                 ) : null}
               </p>
