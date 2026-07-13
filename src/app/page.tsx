@@ -920,7 +920,7 @@ export default function Home() {
               aria-pressed={agencyClickMode === "waypoint"}
               onClick={() => setAgencyClickMode((current) => (current === "waypoint" ? "visited" : "waypoint"))}
             >
-              📍 {agencyClickMode === "waypoint" ? "Clics sur la carte : ajouter comme étape" : "Clics sur la carte : basculer visité"}
+              📍 {agencyClickMode === "waypoint" ? "Ajouter comme étape" : "Basculer visité"}
             </button>
           </div>
         </header>
