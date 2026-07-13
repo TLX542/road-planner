@@ -411,6 +411,9 @@ button:focus-visible {
   align-items: start;
   position: relative;
   padding-bottom: 0.35rem;
+  /* Leaves room on the left for .stopDragHandle, which is absolutely
+     positioned so it doesn't disturb the label/input/controls stack. */
+  padding-left: 1.9rem;
   border-bottom: 1px solid var(--border);
 }
 
@@ -419,8 +422,71 @@ button:focus-visible {
   padding-bottom: 0;
 }
 
+.stopRow.dragging {
+  /* Sits on top of neighboring rows while it's being dragged past them,
+     and gets a card-like lift so it visually detaches from the list. */
+  position: relative;
+  z-index: 20;
+  background: var(--surface);
+  border-radius: 0.65rem;
+  box-shadow: var(--shadow);
+  cursor: grabbing;
+  /* No transition here: dragTranslateY is updated on every pointermove, so
+     animating it would make the row visibly lag behind the pointer. */
+}
+
 .stopRow label {
   font-weight: 600;
+}
+
+/* Small grab handle on the left edge of each stop row. Spans roughly the
+   height of the row (minus the bottom divider) so there's a generous drag
+   target, not just a tiny icon. */
+.stopDragHandle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0.35rem;
+  width: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: var(--muted);
+  cursor: grab;
+  /* Stops touch browsers from scrolling the page/sheet once a drag starts
+     from the handle, so vertical touch movement drives the reorder instead. */
+  touch-action: none;
+}
+
+.stopDragHandle:hover {
+  color: var(--text);
+  background: var(--surface-alt);
+}
+
+.stopDragHandle:active,
+.stopRow.dragging .stopDragHandle {
+  cursor: grabbing;
+  color: var(--primary);
+}
+
+.stopDragHandle[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.stopDragHandleIcon {
+  display: grid;
+  grid-template-columns: repeat(2, 3px);
+  grid-auto-rows: 3px;
+  gap: 3px;
+}
+
+.stopDragHandleIcon span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 /* ---------- Address autocomplete ---------- */

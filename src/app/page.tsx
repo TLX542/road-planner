@@ -721,6 +721,86 @@ export default function Home() {
     });
   };
 
+  // Same effect as moveStop above but for an arbitrary distance in one go —
+  // used by the drag handle below, which can jump straight from index 0 to
+  // index 4 in a single drag rather than moving one slot at a time.
+  const reorderStop = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) {
+      return;
+    }
+
+    updateDay(activeDay.id, (current) => {
+      const stops = [...current.stops];
+      const [movedStop] = stops.splice(fromIndex, 1);
+      stops.splice(toIndex, 0, movedStop);
+
+      const stopAgencyIds = [...current.stopAgencyIds];
+      const [movedAgencyId] = stopAgencyIds.splice(fromIndex, 1);
+      stopAgencyIds.splice(toIndex, 0, movedAgencyId);
+
+      return { ...current, stops, stopAgencyIds };
+    });
+  };
+
+  // Backs the little grab handle on each stop row (see the "controls" markup
+  // below). Rather than firing a reorder on every pixel of pointer movement,
+  // it tracks total displacement from the drag's starting point and only
+  // swaps the stop into a new slot once the pointer has crossed roughly half
+  // a row's height — the same "settle point" feel as most drag-to-reorder
+  // lists. `dragTranslateY` is kept as the *remainder* after that snapping
+  // (not the raw pointer delta), so the dragged row keeps following the
+  // pointer smoothly across a swap instead of visually jumping by a row
+  // height at the moment the reorder happens.
+  const stopRowRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [draggingStopIndex, setDraggingStopIndex] = useState<number | null>(null);
+  const [dragTranslateY, setDragTranslateY] = useState(0);
+
+  const handleStopHandlePointerDown = (index: number) => (event: React.PointerEvent) => {
+    if (activeDay.loading || event.button !== 0) {
+      return;
+    }
+
+    const row = stopRowRefs.current[index];
+    if (!row) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const rowHeight = row.getBoundingClientRect().height;
+    const startY = event.clientY;
+    const stopCount = activeDay.stops.length;
+    let currentIndex = index;
+
+    setDraggingStopIndex(index);
+    setDragTranslateY(0);
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      const deltaY = moveEvent.clientY - startY;
+      const steps = Math.round(deltaY / rowHeight);
+      const clampedSteps = Math.min(Math.max(steps, -index), stopCount - 1 - index);
+      const targetIndex = index + clampedSteps;
+
+      if (targetIndex !== currentIndex) {
+        reorderStop(currentIndex, targetIndex);
+        currentIndex = targetIndex;
+        setDraggingStopIndex(targetIndex);
+      }
+
+      setDragTranslateY(deltaY - clampedSteps * rowHeight);
+    };
+
+    const handleUp = () => {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+      setDraggingStopIndex(null);
+      setDragTranslateY(0);
+    };
+
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
+  };
+
   // A new day starts where the previous one ended: its first stop is
   // pre-filled with the previous day's last stop (the geocoded display name
   // if that day has already been calculated, otherwise whatever text is in
@@ -997,9 +1077,34 @@ export default function Home() {
             {activeDay.stops.map((stop, index) => {
               const isOrigin = index === 0;
               const isDestination = index === activeDay.stops.length - 1;
+              const isDragging = draggingStopIndex === index;
 
               return (
-                <div className="stopRow" key={`stop-${activeDay.id}-${index}`}>
+                <div
+                  className={`stopRow${isDragging ? " dragging" : ""}`}
+                  key={`stop-${activeDay.id}-${index}`}
+                  ref={(node) => {
+                    stopRowRefs.current[index] = node;
+                  }}
+                  style={isDragging ? { transform: `translateY(${dragTranslateY}px)` } : undefined}
+                >
+                  <div
+                    className="stopDragHandle"
+                    role="button"
+                    aria-label={`Glisser pour déplacer l'étape ${index + 1}`}
+                    aria-disabled={activeDay.loading}
+                    title="Glisser pour réordonner"
+                    onPointerDown={handleStopHandlePointerDown(index)}
+                  >
+                    <span className="stopDragHandleIcon" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  </div>
                   <label htmlFor={`stop-${activeDay.id}-${index}`}>
                     {isOrigin ? "Point de départ" : isDestination ? "Point d'arrivée" : `Étape ${index}`}
                   </label>
