@@ -203,6 +203,12 @@ export function TripMap({
   // depend on it (and therefore doesn't need to redraw markers just because
   // the parent re-created the callback).
   const onAgencyClickRef = useRef(onAgencyClick);
+  // Counts clicks on the headquarters (Épinal) marker specifically. Lives
+  // outside the marker-render effect (which reruns and rebuilds every
+  // marker whenever agencyMarkers/agencyClickMode/selectedAgencyIds
+  // change) so the count survives those rebuilds instead of resetting to 0
+  // every time the parent re-renders the marker list.
+  const hqClickCountRef = useRef(0);
 
   useEffect(() => {
     onAgencyClickRef.current = onAgencyClick;
@@ -293,6 +299,16 @@ export function TripMap({
 
           hqMarker.on("click", () => {
             onAgencyClickRef.current?.(agency);
+
+            // Easter egg: the 10th click on the Épinal HQ marker redirects
+            // to the restaurant menu instead of (in addition to) doing the
+            // normal visited/waypoint/comment action above.
+            hqClickCountRef.current += 1;
+            if (hqClickCountRef.current >= 10) {
+              hqClickCountRef.current = 0;
+              window.location.href =
+                "https://le-capri.com/";
+            }
           });
 
           hqMarker.addTo(agencyLayer);
