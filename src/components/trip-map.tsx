@@ -50,6 +50,28 @@ type TripMapProps = {
   onAgencyClick?: (agency: AgencyMarker) => void;
 };
 
+// Épinal is the head office, not just another agency — it gets its own
+// house-shaped marker (see renderAgencyMarkers) instead of the regular
+// visited/not-visited dot so it stands out on the map at a glance. Matched
+// by name rather than a hardcoded id since we don't control how ids are
+// generated from the source spreadsheet; accents/case are normalized away
+// so "Épinal", "epinal", "ÉPINAL", etc. all match.
+function isHeadquarters(agency: Pick<AgencyMarker, "name">): boolean {
+  const normalized = agency.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  return normalized.includes("epinal");
+}
+
+// Inline house glyph for the headquarters marker. Uses currentColor so it
+// picks up the color set on the wrapping .agencyHqMarker div in CSS.
+const HOUSE_ICON_SVG = `
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+    <path d="M12 2.6 1.5 11h3V21h6v-6h3v6h6V11h3L12 2.6Z" />
+  </svg>
+`;
+
 // Escapes text dropped into a Leaflet tooltip's HTML string so agency/screen
 // names can never break out of the markup they're rendered into.
 function escapeHtml(value: string): string {
@@ -84,11 +106,13 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
     totalNew > 0 ? `<span class="agencyTooltipNewTotal">${totalNew} écran${totalNew > 1 ? "s" : ""} neuf${totalNew > 1 ? "s" : ""} nécessaire${totalNew > 1 ? "s" : ""}</span>` : "";
 
   const selectedHtml = isSelected ? `<span class="agencyTooltipNewTotal">📍 Sur l'itinéraire</span>` : "";
+  const hqHtml = isHeadquarters(agency) ? `<span class="agencyTooltipHq">🏠 Siège</span>` : "";
 
   return `
     <div class="agencyTooltip">
       <strong>${escapeHtml(agency.name)}</strong>
       <span class="agencyTooltipAddress">${escapeHtml(agency.address)}</span>
+      ${hqHtml}
       ${selectedHtml}
       ${statusHtml}
       <ul class="agencyTooltipScreens">${screensHtml}</ul>
@@ -185,6 +209,36 @@ export function TripMap({
 
       agencyMarkers.forEach((agency) => {
         const isSelected = selectedAgencyIds.has(agency.id);
+
+        // The headquarters gets a house-shaped icon marker instead of the
+        // regular circle so it's unmistakable at a glance, regardless of
+        // its visited/selected state. It still uses L.marker (not
+        // circleMarker) since divIcon needs a regular marker to attach to.
+        if (isHeadquarters(agency)) {
+          const hqIcon = L.divIcon({
+            className: "agencyHqIconWrapper",
+            html: `<div class="agencyHqMarker${isSelected ? " selected" : ""}">${HOUSE_ICON_SVG}</div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 26],
+            tooltipAnchor: [0, -22],
+          });
+
+          const hqMarker = L.marker([agency.lat, agency.lon], { icon: hqIcon });
+
+          hqMarker.bindTooltip(buildAgencyTooltipHtml(agency, agencyClickMode, isSelected), {
+            direction: "top",
+            sticky: true,
+            opacity: 1,
+            className: "agencyTooltipWrapper",
+          });
+
+          hqMarker.on("click", () => {
+            onAgencyClickRef.current?.(agency);
+          });
+
+          hqMarker.addTo(agencyLayer);
+          return;
+        }
 
         const style = isSelected
           ? {

@@ -705,6 +705,54 @@ input:disabled {
   font-style: italic;
 }
 
+/* ---------- Épinal head-office marker (house icon) ---------- */
+
+/* Leaflet wraps divIcon content in an element with default borders/background
+   from its own stylesheet — strip that so only our .agencyHqMarker circle
+   below is visible. */
+.agencyHqIconWrapper {
+  background: transparent;
+  border: none;
+}
+
+.agencyHqMarker {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50% 50% 50% 4px;
+  background: #f59e0b;
+  color: #ffffff;
+  border: 2px solid #b45309;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Same "currently a stop on the route" treatment as the regular selected
+   markers, just recolored to stay distinct from both the amber default and
+   the blue used for selected regular agencies. */
+.agencyHqMarker.selected {
+  background: #d97706;
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px #1d4ed8, 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.agencyTooltipHq {
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+[data-theme="dark"] .agencyTooltipHq {
+  background: #78350f;
+  color: #fde68a;
+}
+
 /* ---------- Mobile bottom sheets ---------- */
 
 /* Hidden on desktop: the drag handle / peek strip used to open & close each
