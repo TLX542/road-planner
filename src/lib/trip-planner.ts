@@ -15,7 +15,6 @@ export type TripLeg = {
 };
 
 export type TripPlan = {
-  days: number;
   stops: GeocodedStop[];
   legs: TripLeg[];
   totals: {
@@ -237,13 +236,9 @@ async function getLegRoute(start: Coordinate, end: Coordinate): Promise<{
   };
 }
 
-export async function buildTripPlan(stops: string[], days: number): Promise<TripPlan> {
+export async function buildTripPlan(stops: string[]): Promise<TripPlan> {
   if (!Array.isArray(stops) || stops.length < 2) {
     throw new HttpError(400, "Provide at least an origin and a destination.");
-  }
-
-  if (!Number.isInteger(days) || days < 1) {
-    throw new HttpError(400, "Trip days must be an integer greater than 0.");
   }
 
   const normalizedStops = stops.map((stop) => (typeof stop === "string" ? stop.trim() : ""));
@@ -291,7 +286,6 @@ export async function buildTripPlan(stops: string[], days: number): Promise<Trip
   );
 
   return {
-    days,
     stops: geocodedStops,
     legs,
     totals,

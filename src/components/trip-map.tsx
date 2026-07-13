@@ -397,7 +397,7 @@ export function TripMap({
         allLatLngs.push(...latLngs);
 
         // Non-active routes stay clearly visible (not just a faint hint) —
-        // only noticeably thinner/lighter than the active day, not washed out.
+        // only noticeably thinner/lighter than the active route, not washed out.
         L.polyline(latLngs, {
           color: route.color,
           weight: route.isActive ? 6 : 4.5,

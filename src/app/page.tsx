@@ -30,7 +30,6 @@ type GeocodedStop = {
 };
 
 type TripResponse = {
-  days: number;
   stops: GeocodedStop[];
   legs: TripLeg[];
   totals: {
@@ -40,9 +39,7 @@ type TripResponse = {
   routeGeometry: Coordinate[];
 };
 
-type DayPlan = {
-  id: string;
-  label: string;
+type TripState = {
   stops: string[];
   // Parallel array to `stops` — holds the agency id for any stop that was
   // inserted by clicking an agency marker (in "waypoint" mode), or null for
@@ -61,16 +58,8 @@ type DayPlan = {
 
 type Theme = "light" | "dark";
 
-let idCounter = 0;
-function nextId(prefix: string): string {
-  idCounter += 1;
-  return `${prefix}-${idCounter}`;
-}
-
-function createDay(label: string, stops: string[] = ["", ""]): DayPlan {
+function createTrip(stops: string[] = ["", ""]): TripState {
   return {
-    id: nextId("day"),
-    label,
     stops,
     stopAgencyIds: stops.map(() => null),
     result: null,
@@ -102,29 +91,18 @@ function formatDuration(durationSeconds: number): string {
 
 const THEME_STORAGE_KEY = "trip-planner-theme";
 
-// One base hue per day (cycling if there are more days than colors). Within
-// a single day, each leg (the segment between two consecutive stops) shares
-// that day's hue but shifts from a darker shade (first leg) to a lighter
-// shade (last leg), so a multi-stop day reads as one color family while
-// still letting you tell its legs apart. Other days keep their own hue so
-// every day stays visible and distinguishable on the map at once.
-const DAY_HUES = [212, 266, 152, 24, 338, 190, 45, 356];
+// Each leg (the segment between two consecutive stops) shares one base hue
+// but shifts from a darker shade (first leg) to a lighter shade (last leg),
+// so the trip reads as one color family while still letting you tell its
+// legs apart.
+const ROUTE_HUE = 212;
 
-function getDayHue(dayIndex: number): number {
-  return DAY_HUES[dayIndex % DAY_HUES.length];
-}
-
-function getDayTabColor(dayIndex: number): string {
-  return `hsl(${getDayHue(dayIndex)}, 68%, 46%)`;
-}
-
-function getLegColor(dayIndex: number, legIndex: number, legCount: number): string {
-  const hue = getDayHue(dayIndex);
+function getLegColor(legIndex: number, legCount: number): string {
   const lightnessStart = 32;
   const lightnessEnd = 62;
   const progress = legCount > 1 ? legIndex / (legCount - 1) : 0;
   const lightness = lightnessStart + progress * (lightnessEnd - lightnessStart);
-  return `hsl(${hue}, 68%, ${lightness}%)`;
+  return `hsl(${ROUTE_HUE}, 68%, ${lightness}%)`;
 }
 
 // The order the single toggle button cycles through on each click.
@@ -142,8 +120,7 @@ const AGENCY_CLICK_MODE_LABEL: Record<AgencyClickMode, string> = {
 };
 
 export default function Home() {
-  const [days, setDays] = useState<DayPlan[]>(() => [createDay("Jour 1")]);
-  const [activeDayId, setActiveDayId] = useState<string>(() => days[0].id);
+  const [trip, setTrip] = useState<TripState>(() => createTrip());
 
   const [theme, setTheme] = useState<Theme>("light");
 
@@ -259,7 +236,7 @@ export default function Home() {
 
   const [agencies, setAgencies] = useState<AgencyMarker[]>([]);
   // Controls what clicking an agency marker on the map does: insert it as
-  // the earliest waypoint on the active day, toggle its visited flag, or
+  // the earliest waypoint on the trip, toggle its visited flag, or
   // open the comment editor below. Cycled via the single header button.
   const [agencyClickMode, setAgencyClickMode] = useState<AgencyClickMode>("waypoint");
 
@@ -282,7 +259,7 @@ export default function Home() {
   }, []);
 
   // Agency locations (from suivi_ecrans.xlsx) are static reference data, so
-  // they're fetched once on mount rather than tied to any day/route state.
+  // they're fetched once on mount rather than tied to the trip/route state.
   useEffect(() => {
     let cancelled = false;
 
@@ -414,60 +391,48 @@ export default function Home() {
     });
   };
 
-  const activeDayIndex = days.findIndex((day) => day.id === activeDayId);
-  const activeDay = days[activeDayIndex] ?? days[0];
-
   // Whether the current stops are complete enough to calculate. Deliberately
   // independent of loading/updating state so it doesn't flip back and forth
   // as a calculation starts and finishes (that oscillation was causing the
   // auto-recalculation effect to keep re-triggering itself indefinitely).
   const stopsValid = useMemo(
-    () => activeDay.stops.length >= 2 && activeDay.stops.every((stop) => stop.trim().length > 0),
-    [activeDay.stops],
+    () => trip.stops.length >= 2 && trip.stops.every((stop) => stop.trim().length > 0),
+    [trip.stops],
   );
 
-  const canCalculate = stopsValid && !activeDay.loading;
+  const canCalculate = stopsValid && !trip.loading;
 
-  // Every day that has already been calculated gets drawn, split into its
-  // individual legs so each leg can carry its own shade — so switching the
-  // active day never hides another day's route, and every day is always
-  // visible on the map at once.
-  const mapRoutes = useMemo(
-    () =>
-      days.flatMap((day, dayIndex) => {
-        if (!day.result) {
-          return [];
-        }
+  // The calculated route, split into its individual legs so each leg can
+  // carry its own shade.
+  const mapRoutes = useMemo(() => {
+    if (!trip.result) {
+      return [];
+    }
 
-        return day.result.legs.map((leg, legIndex) => ({
-          id: `${day.id}-leg-${legIndex}`,
-          color: getLegColor(dayIndex, legIndex, day.result!.legs.length),
-          geometry: leg.geometry,
-          isActive: day.id === activeDayId,
-        }));
-      }),
-    [days, activeDayId],
-  );
+    return trip.result.legs.map((leg, legIndex) => ({
+      id: `leg-${legIndex}`,
+      color: getLegColor(legIndex, trip.result!.legs.length),
+      geometry: leg.geometry,
+      isActive: true,
+    }));
+  }, [trip.result]);
 
-  // Every agency currently used as a stop on ANY day of the trip (not just
-  // the active one) — shared by the brand/model tally below and the
-  // per-agency breakdown, so both stay in sync off the same selection.
+  // Every agency currently used as a stop on the trip — shared by the
+  // brand/model tally below and the per-agency breakdown, so both stay in
+  // sync off the same selection.
   const selectedAgencyIds = useMemo(
-    () =>
-      new Set(
-        days.flatMap((day) => day.stopAgencyIds.filter((agencyId): agencyId is string => Boolean(agencyId))),
-      ),
-    [days],
+    () => new Set(trip.stopAgencyIds.filter((agencyId): agencyId is string => Boolean(agencyId))),
+    [trip.stopAgencyIds],
   );
 
   // Tally of every screen present at those agencies. Agencies are only
   // counted if a stop is currently linked to them (see stopAgencyIds) —
   // removing that stop (or editing its address by hand) drops it from the
-  // tally automatically. The Set above dedupes both repeats within one day
-  // and an agency that shows up again on a *different* day (e.g. it's the
-  // shared hinge point between Day 1's arrival and Day 2's departure) —
-  // either way it's the same physical set of screens on the wall, counted
-  // once. Visited agencies are excluded too: once a stop has actually been
+  // tally automatically. The Set above dedupes repeats within the trip's
+  // stop list — e.g. an agency that's both an arrival and a later
+  // departure point — either way it's the same physical set of screens on
+  // the wall, counted once. Visited agencies are excluded too: once a stop
+  // has actually been
   // handled, its screens are no longer "still to prepare" and shouldn't
   // inflate the totals below.
   //
@@ -598,14 +563,14 @@ export default function Home() {
     [screenTally],
   );
 
-  const updateDay = useCallback((dayId: string, updater: (day: DayPlan) => DayPlan) => {
-    setDays((current) => current.map((day) => (day.id === dayId ? updater(day) : day)));
+  const updateTrip = useCallback((updater: (current: TripState) => TripState) => {
+    setTrip((current) => updater(current));
   }, []);
 
   // Serializes /api/geocode calls one after another (with a pause between
   // them) so clicking several agency markers in quick succession doesn't
   // fire concurrent requests at Nominatim — same courtesy buildTripPlan
-  // already gives it when geocoding a day's own stops.
+  // already gives it when geocoding the trip's own stops.
   const geocodeQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   // Resolves `coordinate` (the agency's known lat/lon from
@@ -618,7 +583,7 @@ export default function Home() {
   // is left in place — it's still a valid, editable address field, just
   // not guaranteed to geocode on the first try.
   const resolveAgencyAddress = useCallback(
-    (dayId: string, placeholder: string, coordinate: { lat: number; lon: number }) => {
+    (placeholder: string, coordinate: { lat: number; lon: number }) => {
       const run = async () => {
         try {
           const response = await fetch("/api/geocode", {
@@ -636,7 +601,7 @@ export default function Home() {
             return;
           }
 
-          updateDay(dayId, (current) => {
+          updateTrip((current) => {
             const index = current.stops.findIndex((stop) => stop === placeholder);
             if (index === -1) {
               return current;
@@ -657,10 +622,10 @@ export default function Home() {
           }),
       );
     },
-    [updateDay],
+    [updateTrip],
   );
 
-  // Inserts the agency as the natural "next" point on the active day, so
+  // Inserts the agency as the natural "next" point on the trip, so
   // clicking agencies in the order you plan to visit them keeps the trip
   // in that same order instead of reversing it:
   //   1. If "Point de départ" (the first stop) is still empty, fill that.
@@ -684,7 +649,7 @@ export default function Home() {
     (agency: AgencyMarker) => {
       const placeholder = `${agency.address}, ${agency.name}`;
 
-      updateDay(activeDay.id, (current) => {
+      updateTrip((current) => {
         const stops = [...current.stops];
         const stopAgencyIds = [...current.stopAgencyIds];
 
@@ -711,9 +676,9 @@ export default function Home() {
         return { ...current, stops, stopAgencyIds };
       });
 
-      resolveAgencyAddress(activeDay.id, placeholder, { lat: agency.lat, lon: agency.lon });
+      resolveAgencyAddress(placeholder, { lat: agency.lat, lon: agency.lon });
     },
-    [activeDay.id, updateDay, resolveAgencyAddress],
+    [updateTrip, resolveAgencyAddress],
   );
 
   // Dispatches an agency marker click based on the current mode: the
@@ -738,18 +703,18 @@ export default function Home() {
   // waypoint before the first request has even resolved — and without any
   // sequencing, whichever response lands *last* would win, even if it's the
   // stale one from before the removal. This ref tracks the most recently
-  // dispatched request per day so a response can check "am I still the
-  // latest?" before touching state, and silently drop itself if not.
-  const requestSeqRef = useRef<Map<string, number>>(new Map());
+  // dispatched request so a response can check "am I still the latest?"
+  // before touching state, and silently drop itself if not.
+  const requestSeqRef = useRef(0);
 
   const fetchTrip = useCallback(
-    async (dayId: string, stops: string[], options?: { silentError?: boolean }) => {
+    async (stops: string[], options?: { silentError?: boolean }) => {
       const stopsValidForFetch = stops.length >= 2 && stops.every((stop) => stop.trim().length > 0);
       if (!stopsValidForFetch) {
         if (!options?.silentError) {
-          updateDay(dayId, (current) => ({
+          updateTrip((current) => ({
             ...current,
-            error: "Veuillez fournir au moins deux adresses valides pour ce jour.",
+            error: "Veuillez fournir au moins deux adresses valides.",
           }));
         }
         return;
@@ -757,11 +722,11 @@ export default function Home() {
 
       const silent = Boolean(options?.silentError);
 
-      const seq = (requestSeqRef.current.get(dayId) ?? 0) + 1;
-      requestSeqRef.current.set(dayId, seq);
-      const isStale = () => requestSeqRef.current.get(dayId) !== seq;
+      requestSeqRef.current += 1;
+      const seq = requestSeqRef.current;
+      const isStale = () => requestSeqRef.current !== seq;
 
-      updateDay(dayId, (current) => ({
+      updateTrip((current) => ({
         ...current,
         loading: !silent,
         updating: silent,
@@ -772,7 +737,7 @@ export default function Home() {
         const response = await fetch("/api/plan-trip", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stops, days: 1 }),
+          body: JSON.stringify({ stops }),
         });
 
         const data = (await response.json()) as TripResponse | { error?: string };
@@ -781,15 +746,15 @@ export default function Home() {
           throw new Error("error" in data && data.error ? data.error : "Échec du calcul de l'itinéraire.");
         }
 
-        // A newer request for this day has been dispatched since this one
-        // started (e.g. the user removed a waypoint while this fetch was
-        // still resolving) — its own response will apply the correct state,
-        // so this stale one must not overwrite it.
+        // A newer request has been dispatched since this one started (e.g.
+        // the user removed a waypoint while this fetch was still
+        // resolving) — its own response will apply the correct state, so
+        // this stale one must not overwrite it.
         if (isStale()) {
           return;
         }
 
-        updateDay(dayId, (current) => ({
+        updateTrip((current) => ({
           ...current,
           result: data as TripResponse,
           loading: false,
@@ -801,7 +766,7 @@ export default function Home() {
           return;
         }
 
-        updateDay(dayId, (current) => ({
+        updateTrip((current) => ({
           ...current,
           // A silent background failure (e.g. a transient geocoding
           // hiccup) shouldn't blank out the last known-good route on the
@@ -817,11 +782,11 @@ export default function Home() {
         }));
       }
     },
-    [updateDay],
+    [updateTrip],
   );
 
   const updateStop = (index: number, value: string) => {
-    updateDay(activeDay.id, (current) => ({
+    updateTrip((current) => ({
       ...current,
       stops: current.stops.map((stop, stopIndex) => (stopIndex === index ? value : stop)),
       // Manually editing a stop breaks its link to whichever agency (if
@@ -832,7 +797,7 @@ export default function Home() {
   };
 
   const addStop = () => {
-    updateDay(activeDay.id, (current) => ({
+    updateTrip((current) => ({
       ...current,
       stops: [...current.stops, ""],
       stopAgencyIds: [...current.stopAgencyIds, null],
@@ -840,7 +805,7 @@ export default function Home() {
   };
 
   const removeStop = (index: number) => {
-    updateDay(activeDay.id, (current) => ({
+    updateTrip((current) => ({
       ...current,
       stops: current.stops.filter((_, stopIndex) => stopIndex !== index),
       stopAgencyIds: current.stopAgencyIds.filter((_, stopIndex) => stopIndex !== index),
@@ -849,11 +814,11 @@ export default function Home() {
 
   const moveStop = (index: number, direction: -1 | 1) => {
     const target = index + direction;
-    if (target < 0 || target >= activeDay.stops.length) {
+    if (target < 0 || target >= trip.stops.length) {
       return;
     }
 
-    updateDay(activeDay.id, (current) => {
+    updateTrip((current) => {
       const stops = [...current.stops];
       [stops[index], stops[target]] = [stops[target], stops[index]];
       const stopAgencyIds = [...current.stopAgencyIds];
@@ -870,7 +835,7 @@ export default function Home() {
       return;
     }
 
-    updateDay(activeDay.id, (current) => {
+    updateTrip((current) => {
       const stops = [...current.stops];
       const [movedStop] = stops.splice(fromIndex, 1);
       stops.splice(toIndex, 0, movedStop);
@@ -897,7 +862,7 @@ export default function Home() {
   const [dragTranslateY, setDragTranslateY] = useState(0);
 
   const handleStopHandlePointerDown = (index: number) => (event: React.PointerEvent) => {
-    if (activeDay.loading || event.button !== 0) {
+    if (trip.loading || event.button !== 0) {
       return;
     }
 
@@ -910,7 +875,7 @@ export default function Home() {
 
     const rowHeight = row.getBoundingClientRect().height;
     const startY = event.clientY;
-    const stopCount = activeDay.stops.length;
+    const stopCount = trip.stops.length;
     let currentIndex = index;
 
     setDraggingStopIndex(index);
@@ -942,48 +907,12 @@ export default function Home() {
     window.addEventListener("pointerup", handleUp);
   };
 
-  // A new day starts where the previous one ended: its first stop is
-  // pre-filled with the previous day's last stop (the geocoded display name
-  // if that day has already been calculated, otherwise whatever text is in
-  // the field), so consecutive days chain into one continuous trip.
-  const addDay = () => {
-    const previousDay = days[days.length - 1];
-    const lastIndex = previousDay ? previousDay.stops.length - 1 : -1;
-    const lastResolvedStop = previousDay?.result?.stops[previousDay.result.stops.length - 1]?.displayName;
-    const lastTypedStop = previousDay?.stops[lastIndex] ?? "";
-    const carryOverStop = lastResolvedStop ?? lastTypedStop;
-    const carryOverAgencyId = previousDay && lastIndex >= 0 ? previousDay.stopAgencyIds[lastIndex] : null;
-
-    const day = createDay(`Jour ${days.length + 1}`, [carryOverStop, ""]);
-    day.stopAgencyIds = [carryOverAgencyId ?? null, null];
-    setDays((current) => [...current, day]);
-    setActiveDayId(day.id);
-  };
-
-  const removeDay = (dayId: string) => {
-    if (days.length <= 1) {
-      return;
-    }
-
-    setDays((current) => current.filter((day) => day.id !== dayId));
-    if (activeDayId === dayId) {
-      const fallback = days.find((day) => day.id !== dayId);
-      if (fallback) {
-        setActiveDayId(fallback.id);
-      }
-    }
-  };
-
-  const switchDay = (dayId: string) => {
-    setActiveDayId(dayId);
-  };
-
   return (
     <div className="appShell">
       <section className="mapArea">
         <TripMap
           routes={mapRoutes}
-          activeStops={activeDay.result?.stops.map((stop) => stop.coordinate) ?? []}
+          activeStops={trip.result?.stops.map((stop) => stop.coordinate) ?? []}
           agencyMarkers={agencies}
           selectedAgencyIds={selectedAgencyIds}
           agencyClickMode={agencyClickMode}
@@ -1164,7 +1093,7 @@ export default function Home() {
           onClick={() => setMobilePlannerOpen((open) => !open)}
         >
           <span className="sheetHandleBar" aria-hidden="true" />
-          <span className="sheetHandleLabel">{activeDay.label} · Planifier</span>
+          <span className="sheetHandleLabel">Planifier</span>
         </button>
         <header className="islandHeader">
           <div>
@@ -1186,50 +1115,11 @@ export default function Home() {
           </div>
         </header>
 
-        <div>
-          <span className="tabGroupLabel">Jours</span>
-          <div className="tabRow" role="tablist" aria-label="Jours">
-            {days.map((day, dayIndex) => (
-              <button
-                key={day.id}
-                type="button"
-                role="tab"
-                aria-selected={day.id === activeDayId}
-                className={`tab dayTab${day.id === activeDayId ? " active" : ""}`}
-                onClick={() => switchDay(day.id)}
-              >
-                <span
-                  className="colorDot"
-                  aria-hidden="true"
-                  style={{ backgroundColor: getDayTabColor(dayIndex) }}
-                />
-                <span className="dayTabLabel">{day.label}</span>
-                {days.length > 1 ? (
-                  <span
-                    className="tabClose"
-                    role="button"
-                    aria-label={`Supprimer ${day.label}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      removeDay(day.id);
-                    }}
-                  >
-                    ✕
-                  </span>
-                ) : null}
-              </button>
-            ))}
-            <button type="button" className="tab dayTab addTab" onClick={addDay}>
-              <span className="dayTabLabel">+ Ajouter un jour</span>
-            </button>
-          </div>
-        </div>
-
         <form
           className="plannerForm"
           onSubmit={(event) => {
             event.preventDefault();
-            void fetchTrip(activeDay.id, activeDay.stops);
+            void fetchTrip(trip.stops);
             // Collapse back to the peek strip so the newly-calculated route
             // is immediately visible on the map instead of hidden behind
             // the sheet — only matters on mobile, harmless elsewhere.
@@ -1238,29 +1128,29 @@ export default function Home() {
         >
           <section className="plannerSection">
             <div className="sectionHeading">
-              <h2>Étapes — {activeDay.label}</h2>
-              <button type="button" onClick={addStop} disabled={activeDay.loading}>
+              <h2>Étapes</h2>
+              <button type="button" onClick={addStop} disabled={trip.loading}>
                 + Ajouter une étape
               </button>
             </div>
             <ol className="itineraryOutline">
-              {activeDay.stops.map((stop, index) => (
+              {trip.stops.map((stop, index) => (
                 <li key={`outline-${index}`}>
-                  {index === 0 ? "Départ" : index === activeDay.stops.length - 1 ? "Arrivée" : `Étape ${index}`}:{" "}
+                  {index === 0 ? "Départ" : index === trip.stops.length - 1 ? "Arrivée" : `Étape ${index}`}:{" "}
                   <strong>{stop.trim() || "—"}</strong>
                 </li>
               ))}
             </ol>
 
-            {activeDay.stops.map((stop, index) => {
+            {trip.stops.map((stop, index) => {
               const isOrigin = index === 0;
-              const isDestination = index === activeDay.stops.length - 1;
+              const isDestination = index === trip.stops.length - 1;
               const isDragging = draggingStopIndex === index;
 
               return (
                 <div
                   className={`stopRow${isDragging ? " dragging" : ""}`}
-                  key={`stop-${activeDay.id}-${index}`}
+                  key={`stop-${index}`}
                   ref={(node) => {
                     stopRowRefs.current[index] = node;
                   }}
@@ -1270,7 +1160,7 @@ export default function Home() {
                     className="stopDragHandle"
                     role="button"
                     aria-label={`Glisser pour déplacer l'étape ${index + 1}`}
-                    aria-disabled={activeDay.loading}
+                    aria-disabled={trip.loading}
                     title="Glisser pour réordonner"
                     onPointerDown={handleStopHandlePointerDown(index)}
                   >
@@ -1283,35 +1173,35 @@ export default function Home() {
                       <span />
                     </span>
                   </div>
-                  <label htmlFor={`stop-${activeDay.id}-${index}`}>
+                  <label htmlFor={`stop-${index}`}>
                     {isOrigin ? "Point de départ" : isDestination ? "Point d'arrivée" : `Étape ${index}`}
                   </label>
                   <AddressAutocomplete
-                    id={`stop-${activeDay.id}-${index}`}
+                    id={`stop-${index}`}
                     value={stop}
                     onChange={(value) => updateStop(index, value)}
                     placeholder="Entrez une adresse, une ville ou un lieu"
-                    disabled={activeDay.loading}
+                    disabled={trip.loading}
                   />
                   <div className="controls">
                     <button
                       type="button"
                       onClick={() => moveStop(index, -1)}
-                      disabled={activeDay.loading || index === 0}
+                      disabled={trip.loading || index === 0}
                     >
                       ↑
                     </button>
                     <button
                       type="button"
                       onClick={() => moveStop(index, 1)}
-                      disabled={activeDay.loading || index === activeDay.stops.length - 1}
+                      disabled={trip.loading || index === trip.stops.length - 1}
                     >
                       ↓
                     </button>
                     <button
                       type="button"
                       onClick={() => removeStop(index)}
-                      disabled={activeDay.loading || activeDay.stops.length <= 2}
+                      disabled={trip.loading || trip.stops.length <= 2}
                     >
                       Supprimer
                     </button>
@@ -1321,30 +1211,30 @@ export default function Home() {
             })}
           </section>
 
-          <button className="calculateButton" type="submit" disabled={!canCalculate || activeDay.loading}>
-            {activeDay.loading ? "Calcul en cours..." : `Calculer l'itinéraire pour ${activeDay.label}`}
+          <button className="calculateButton" type="submit" disabled={!canCalculate || trip.loading}>
+            {trip.loading ? "Calcul en cours..." : "Calculer l'itinéraire"}
           </button>
 
-          {activeDay.error ? <p className="error">{activeDay.error}</p> : null}
+          {trip.error ? <p className="error">{trip.error}</p> : null}
         </form>
 
-        {activeDay.result ? (
+        {trip.result ? (
           <section className="resultsCard" aria-live="polite">
             <h2>
-              Résumé de l'itinéraire — {activeDay.label}
-              {activeDay.updating ? <span className="muted"> · Mise à jour…</span> : null}
+              Résumé de l'itinéraire
+              {trip.updating ? <span className="muted"> · Mise à jour…</span> : null}
             </h2>
             <div className="totals">
               <p>
-                Distance : <strong>{formatDistance(activeDay.result.totals.distanceMeters)}</strong>
+                Distance : <strong>{formatDistance(trip.result.totals.distanceMeters)}</strong>
               </p>
               <p>
-                Durée : <strong>{formatDuration(activeDay.result.totals.durationSeconds)}</strong>
+                Durée : <strong>{formatDuration(trip.result.totals.durationSeconds)}</strong>
               </p>
             </div>
             <h3>Segments de l'itinéraire</h3>
             <ul className="legsList">
-              {activeDay.result.legs.map((leg, index) => (
+              {trip.result.legs.map((leg, index) => (
                 <li key={`${leg.from}-${leg.to}-${index}`}>
                   <h4>
                     Segment {index + 1} : {leg.from} → {leg.to}
@@ -1361,6 +1251,7 @@ export default function Home() {
           </section>
         ) : null}
       </div>
+
 
       {commentAgencyId
         ? (() => {

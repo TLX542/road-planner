@@ -4,14 +4,13 @@ import { buildTripPlan, safeErrorMessage, safeErrorStatus } from "@/lib/trip-pla
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { stops?: unknown; days?: unknown };
+    const body = (await request.json()) as { stops?: unknown };
 
     const stops = Array.isArray(body.stops)
       ? body.stops.filter((item): item is string => typeof item === "string")
       : [];
-    const days = typeof body.days === "number" ? body.days : Number(body.days ?? 0);
 
-    const result = await buildTripPlan(stops, days);
+    const result = await buildTripPlan(stops);
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
