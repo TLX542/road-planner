@@ -876,6 +876,14 @@ input:disabled {
     bottom: auto;
     border-radius: 0 0 1.1rem 1.1rem;
     padding-top: env(safe-area-inset-top, 0px);
+    /* .topIslandLeft is `display: grid; gap: 0.85rem` on desktop (see the
+       base rule above), which isn't overridden at this breakpoint. With
+       only two grid children here — .sheetHandle and .resultsCard — that
+       gap showed up as a dead strip of empty space between the peek strip
+       and the sheet content once opened. The desktop layout doesn't need
+       this override since .topIslandLeft .resultsCard there is a normal
+       floating card that supplies its own spacing. */
+    gap: 0;
   }
 
   .topIslandLeft.sheetOpen {
@@ -908,7 +916,7 @@ input:disabled {
     box-shadow: none;
     border: none;
     border-radius: 0;
-    padding: 0 1.1rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.6rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .sheetHandle {

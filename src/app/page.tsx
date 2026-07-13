@@ -935,6 +935,8 @@ export default function Home() {
                     <b>Les écrans autres que la marque IIYAMA ne sonts pas comptés pour la mutualisation, 
                       et sont considérés comme nécéssitant deux écrans neufs pour chaque écran usagé récupéré.
                     </b>
+                    <br />
+                    Les agences marquées comme visitées ne sont plus comptées dans ces totaux.
                   </span>
                 ) : null}
               </p>
