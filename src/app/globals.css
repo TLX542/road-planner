@@ -588,6 +588,22 @@ button:focus-visible {
   color: #fca5a5;
 }
 
+/* Second, distinct pill stacked next to .hsBadge for HS units flagged
+   `needsReplacement: true` in lib/screen-math.ts — same shape as .hsBadge
+   but a different (warning, not danger) color so the two read as related
+   but not identical: "HS" alone means retire-only, "HS" + this badge means
+   it also needs a fresh matching pair. */
+.hsBadgeReplace {
+  margin-left: 0.3rem;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+[data-theme="dark"] .hsBadgeReplace {
+  background: #451a03;
+  color: #fcd34d;
+}
+
 .plannerSection summary {
   font-weight: 700;
   cursor: pointer;

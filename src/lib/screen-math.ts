@@ -113,11 +113,19 @@ export function combinedLeftoverForModel(installedCount: number, stockCount: num
 //     picking up, but unlike stock they never pair with anything (a broken
 //     screen can't complete a redeployable pair) and never reduce another
 //     model's totals — they're simply always counted, in full, toward the
-//     "screens to bring home" tally and nowhere else.
+//     "screens to bring home" tally.
 //
-// Either way, neither list ever feeds newScreensNeededForCount: there's no
-// active installed screen to replace for either a stock spare or an HS
-// unit.
+//     By default an HS unit is *not* factored into newScreensNeededForCount
+//     at all — same as stock, there's no active installed screen to
+//     replace. But some HS units are known to be actively broken displays
+//     that DO need swapping out, not just retiring: for those, set
+//     `needsReplacement: true` on the entry. A flagged HS unit still never
+//     counts toward installedCount, stockCount, pairing, or the surplus
+//     tally — it's simply never "installed" for any of that math — but it
+//     does add its own brand-new matching pair (2 new screens, same as any
+//     non-redeployable unit) on top of whatever the rest of the tally
+//     needs. Leave `needsReplacement` unset/false for an HS unit that's
+//     simply being retired with no replacement planned.
 //
 // Add entries to either list as more of these turn up. Omit `agencyName`
 // for a model that matches everywhere it appears; provide a city/name
@@ -128,6 +136,9 @@ type ScreenFlagEntry = {
   brand: string;
   model: string;
   count?: number;
+  // Only meaningful on KNOWN_HS_SCREENS entries — see comment above.
+  // Ignored on KNOWN_UNUSED_STOCK entries.
+  needsReplacement?: boolean;
 };
 
 const KNOWN_UNUSED_STOCK: ScreenFlagEntry[] = [
@@ -136,8 +147,11 @@ const KNOWN_UNUSED_STOCK: ScreenFlagEntry[] = [
 ];
 
 // Broken/out-of-service units — see the comment above for how these differ
-// from KNOWN_UNUSED_STOCK.
-const KNOWN_HS_SCREENS: ScreenFlagEntry[] = [{ agencyName: "LYON", brand: "IIYAMA", model: "XUB2493HS-B5" }];
+// from KNOWN_UNUSED_STOCK, and for what `needsReplacement` toggles.
+const KNOWN_HS_SCREENS: ScreenFlagEntry[] = [
+  { agencyName: "LYON", brand: "IIYAMA", model: "XUB2493HS-B5" },
+  { agencyName: "SCHIRMECK", brand: "IIYAMA", model: "XUB2493HS-B5", needsReplacement: true}
+];
 
 // Case/accent-insensitive so "Épinal", "epinal", "RENNES", "Groupe Rennes",
 // etc. all match consistently regardless of exactly how the spreadsheet
@@ -152,8 +166,16 @@ function normalizeForMatch(value: string): string {
 
 // Shared matcher for both KNOWN_UNUSED_STOCK and KNOWN_HS_SCREENS — same
 // (agency, brand, model) matching rules, just applied against whichever
-// list the caller passes in.
-function flaggedCountFor(entries: ScreenFlagEntry[], agencyName: string, brand: string, model: string): number {
+// list the caller passes in. An optional extra predicate narrows further
+// (e.g. only entries with `needsReplacement: true`) without duplicating
+// the agency/brand/model matching logic.
+function flaggedCountFor(
+  entries: ScreenFlagEntry[],
+  agencyName: string,
+  brand: string,
+  model: string,
+  extraFilter?: (entry: ScreenFlagEntry) => boolean,
+): number {
   const normalizedAgency = normalizeForMatch(agencyName);
   const normalizedBrand = normalizeForMatch(brand);
   const normalizedModel = normalizeForMatch(model);
@@ -163,6 +185,9 @@ function flaggedCountFor(entries: ScreenFlagEntry[], agencyName: string, brand: 
       return total;
     }
     if (entry.agencyName !== undefined && !normalizedAgency.includes(normalizeForMatch(entry.agencyName))) {
+      return total;
+    }
+    if (extraFilter !== undefined && !extraFilter(entry)) {
       return total;
     }
     return total + (entry.count ?? 1);
@@ -175,17 +200,61 @@ function flaggedCountFor(entries: ScreenFlagEntry[], agencyName: string, brand: 
 // both still need retrieving, but neither ever feeds
 // newScreensNeededForCount, and hsCount never feeds combinedLeftoverForModel
 // either (see the section comment above).
+//
+// `hsNeedingReplacementCount` is the subset of `hsCount` whose
+// KNOWN_HS_SCREENS entry (or entries) set `needsReplacement: true` — it's
+// always <= hsCount. It still isn't part of installedCount/hsCount's own
+// math (pairing, surplus, etc.), but the caller should feed it through
+// newScreensNeededForHs to add its share to the new-screens total. See
+// the KNOWN_HS_SCREENS section comment above for the full rationale.
 export function splitInstalledAndStockCount(
   agencyName: string,
   screen: { brand: string; model: string; count: number },
-): { installedCount: number; stockCount: number; hsCount: number } {
+): { installedCount: number; stockCount: number; hsCount: number; hsNeedingReplacementCount: number } {
   const knownStock = flaggedCountFor(KNOWN_UNUSED_STOCK, agencyName, screen.brand, screen.model);
   const stockCount = Math.min(knownStock, screen.count);
 
   const knownHs = flaggedCountFor(KNOWN_HS_SCREENS, agencyName, screen.brand, screen.model);
   const hsCount = Math.min(knownHs, screen.count - stockCount);
 
-  return { installedCount: screen.count - stockCount - hsCount, stockCount, hsCount };
+  const knownHsNeedingReplacement = flaggedCountFor(
+    KNOWN_HS_SCREENS,
+    agencyName,
+    screen.brand,
+    screen.model,
+    (entry) => entry.needsReplacement === true,
+  );
+  const hsNeedingReplacementCount = Math.min(knownHsNeedingReplacement, hsCount);
+
+  return { installedCount: screen.count - stockCount - hsCount, stockCount, hsCount, hsNeedingReplacementCount };
+}
+
+// New screens needed on top of the regular tally to cover HS/broken units
+// flagged with `needsReplacement: true`. An HS unit never pairs with
+// anything (see the KNOWN_HS_SCREENS comment above), so — same as any
+// non-redeployable old unit — each one needs its own brand-new matching
+// pair: 2 new screens per unit.
+export function newScreensNeededForHs(hsNeedingReplacementCount: number): number {
+  if (!Number.isFinite(hsNeedingReplacementCount) || hsNeedingReplacementCount <= 0) {
+    return 0;
+  }
+  return hsNeedingReplacementCount * 2;
+}
+
+// Convenience for callers that want the total extra new-screens count
+// (across a whole screens array, at one agency) contributed by flagged HS
+// units, without needing to call splitInstalledAndStockCount themselves
+// per screen. Mirrors how withoutKnownStock wraps the installed side of
+// the same split.
+export function totalNewScreensNeededForHs(
+  agencyName: string,
+  screens: { brand: string; model: string; count: number }[],
+): number {
+  return screens.reduce(
+    (total, screen) =>
+      total + newScreensNeededForHs(splitInstalledAndStockCount(agencyName, screen).hsNeedingReplacementCount),
+    0,
+  );
 }
 
 // Convenience for callers (like the per-agency tally) that just want a

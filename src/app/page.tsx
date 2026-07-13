@@ -4,7 +4,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { TripMap, type AgencyClickMode, type AgencyMarker } from "@/components/trip-map";
-import { newScreensNeededForCount, combinedLeftoverForModel, totalNewScreensNeeded, splitInstalledAndStockCount, withoutKnownStock } from "@/lib/screen-math";
+import {
+  newScreensNeededForCount,
+  combinedLeftoverForModel,
+  totalNewScreensNeeded,
+  splitInstalledAndStockCount,
+  withoutKnownStock,
+  newScreensNeededForHs,
+  totalNewScreensNeededForHs,
+} from "@/lib/screen-math";
 
 type TripLeg = {
   from: string;
@@ -466,11 +474,18 @@ export default function Home() {
   // `count` here is installed units only — known unused stock (spares
   // sitting in an agency's stock room, see lib/screen-math.ts) is split
   // out into `stockCount`, and known HS/broken units into `hsCount`.
-  // Neither ever feeds newScreensNeededForCount; stockCount can still
-  // surface in the surplus list below if it doesn't find a pair, and
-  // hsCount always surfaces there in full (see leftoverScreensTally).
+  // Neither `count` nor `hsCount` feeds newScreensNeededForCount directly;
+  // stockCount can still surface in the surplus list below if it doesn't
+  // find a pair, and hsCount always surfaces there in full (see
+  // leftoverScreensTally). `hsNeedingReplacementCount` is the subset of
+  // hsCount flagged `needsReplacement: true` in lib/screen-math.ts — it
+  // doesn't feed the pairing/surplus math either, but it does add its own
+  // new-screens need (see newScreensNeededForHs below).
   const screenTally = useMemo(() => {
-    const tally = new Map<string, { brand: string; model: string; count: number; stockCount: number; hsCount: number }>();
+    const tally = new Map<
+      string,
+      { brand: string; model: string; count: number; stockCount: number; hsCount: number; hsNeedingReplacementCount: number }
+    >();
 
     selectedAgencyIds.forEach((agencyId) => {
       const agency = agencies.find((candidate) => candidate.id === agencyId);
@@ -479,15 +494,26 @@ export default function Home() {
       }
 
       agency.screens.forEach((screen) => {
-        const { installedCount, stockCount, hsCount } = splitInstalledAndStockCount(agency.name, screen);
+        const { installedCount, stockCount, hsCount, hsNeedingReplacementCount } = splitInstalledAndStockCount(
+          agency.name,
+          screen,
+        );
         const key = `${screen.brand}\u0000${screen.model}`;
         const existing = tally.get(key);
         if (existing) {
           existing.count += installedCount;
           existing.stockCount += stockCount;
           existing.hsCount += hsCount;
+          existing.hsNeedingReplacementCount += hsNeedingReplacementCount;
         } else {
-          tally.set(key, { brand: screen.brand, model: screen.model, count: installedCount, stockCount, hsCount });
+          tally.set(key, {
+            brand: screen.brand,
+            model: screen.model,
+            count: installedCount,
+            stockCount,
+            hsCount,
+            hsNeedingReplacementCount,
+          });
         }
       });
     });
@@ -499,8 +525,14 @@ export default function Home() {
 
   // How many brand-new screens the trip's agencies will need in total, so
   // each old screen (and any duplicate it already has) ends up paired with
-  // a matching new one. See lib/screen-math.ts for the per-model rule.
-  const totalNewScreens = useMemo(() => totalNewScreensNeeded(screenTally), [screenTally]);
+  // a matching new one, PLUS a matching new pair for every flagged HS unit
+  // (see lib/screen-math.ts for both rules).
+  const totalNewScreens = useMemo(
+    () =>
+      totalNewScreensNeeded(screenTally) +
+      screenTally.reduce((sum, item) => sum + newScreensNeededForHs(item.hsNeedingReplacementCount), 0),
+    [screenTally],
+  );
 
   // Same new-screens math, but broken down per agency instead of pooled
   // across the whole trip — so e.g. "Montigny — 6 écrans neufs" is visible
@@ -520,7 +552,9 @@ export default function Home() {
       rows.push({
         id: agency.id,
         name: agency.name,
-        newScreens: totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens)),
+        newScreens:
+          totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens)) +
+          totalNewScreensNeededForHs(agency.name, agency.screens),
       });
     });
 
@@ -985,9 +1019,11 @@ export default function Home() {
             <h2>Écrans pour l'ensemble du road trip</h2>
             <ul className="screenTallyList">
               {screenTally
-                .filter((item) => item.count > 0)
+                .filter((item) => item.count > 0 || item.hsNeedingReplacementCount > 0)
                 .map((item) => {
-                  const newNeeded = newScreensNeededForCount(item.count, item.brand);
+                  const newNeeded =
+                    newScreensNeededForCount(item.count, item.brand) +
+                    newScreensNeededForHs(item.hsNeedingReplacementCount);
                   return (
                     <li key={`${item.brand}-${item.model}`}>
                       {item.brand} {item.model}
@@ -1052,9 +1088,12 @@ export default function Home() {
                     entre eux), ils ne comptent plus non plus comme surplus — même s'ils restent à récupérer sur
                     place.
                     <br />
-                    Les écrans connus comme étant HS (hors service) sont eux aussi exclus des écrans neufs à
-                    préparer, mais ne comptent jamais comme surplus ni ne peuvent former de paire : ils apparaissent
-                    toujours intégralement dans la liste "à récupérer", séparément du surplus.
+                    Les écrans connus comme étant HS (hors service) ne comptent jamais comme surplus ni ne peuvent
+                    former de paire : ils apparaissent toujours intégralement dans la liste "à récupérer",
+                    séparément du surplus. Par défaut ils sont aussi exclus des écrans neufs à préparer — mais un
+                    écran HS peut être marqué individuellement (dans lib/screen-math.ts) comme "à remplacer" : il
+                    reste exclu du surplus et de la mutualisation comme n'importe quel écran HS, mais ajoute alors sa
+                    propre paire d'écrans neufs au total, comme n'importe quel écran usagé non redéployable.
                   </span>
                 ) : null}
               </p>
@@ -1098,6 +1137,13 @@ export default function Home() {
                         <>
                           {item.leftover > 0 ? " · " : " — "}
                           <strong>{item.hsCount}</strong> <span className="hsBadge">HS</span>
+                          {item.hsNeedingReplacementCount > 0 ? (
+                            <span className="hsBadge hsBadgeReplace">
+                              {item.hsNeedingReplacementCount === item.hsCount
+                                ? "à remplacer"
+                                : `${item.hsNeedingReplacementCount} à remplacer`}
+                            </span>
+                          ) : null}
                         </>
                       ) : null}
                     </li>
