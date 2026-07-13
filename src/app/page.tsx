@@ -465,10 +465,12 @@ export default function Home() {
   //
   // `count` here is installed units only — known unused stock (spares
   // sitting in an agency's stock room, see lib/screen-math.ts) is split
-  // out into `stockCount` instead, so it never feeds newScreensNeededForCount
-  // but still surfaces in the surplus list further down.
+  // out into `stockCount`, and known HS/broken units into `hsCount`.
+  // Neither ever feeds newScreensNeededForCount; stockCount can still
+  // surface in the surplus list below if it doesn't find a pair, and
+  // hsCount always surfaces there in full (see leftoverScreensTally).
   const screenTally = useMemo(() => {
-    const tally = new Map<string, { brand: string; model: string; count: number; stockCount: number }>();
+    const tally = new Map<string, { brand: string; model: string; count: number; stockCount: number; hsCount: number }>();
 
     selectedAgencyIds.forEach((agencyId) => {
       const agency = agencies.find((candidate) => candidate.id === agencyId);
@@ -477,14 +479,15 @@ export default function Home() {
       }
 
       agency.screens.forEach((screen) => {
-        const { installedCount, stockCount } = splitInstalledAndStockCount(agency.name, screen);
+        const { installedCount, stockCount, hsCount } = splitInstalledAndStockCount(agency.name, screen);
         const key = `${screen.brand}\u0000${screen.model}`;
         const existing = tally.get(key);
         if (existing) {
           existing.count += installedCount;
           existing.stockCount += stockCount;
+          existing.hsCount += hsCount;
         } else {
-          tally.set(key, { brand: screen.brand, model: screen.model, count: installedCount, stockCount });
+          tally.set(key, { brand: screen.brand, model: screen.model, count: installedCount, stockCount, hsCount });
         }
       });
     });
@@ -545,6 +548,11 @@ export default function Home() {
   // same model) is no longer "surplus with nowhere to go," so it drops out
   // of this list even though it — and its new pair-mate — still need to be
   // physically picked up.
+  //
+  // Known HS/broken units (hsCount) are added on top, unconditionally —
+  // they never take part in the pairing math above (a broken screen can't
+  // complete a redeployable pair with anything), so every HS unit always
+  // shows up here in full, distinct from the "en surplus" figure.
   const leftoverScreensTally = useMemo(
     () =>
       screenTally
@@ -552,7 +560,7 @@ export default function Home() {
           ...item,
           leftover: combinedLeftoverForModel(item.count, item.stockCount, item.brand),
         }))
-        .filter((item) => item.leftover > 0),
+        .filter((item) => item.leftover > 0 || item.hsCount > 0),
     [screenTally],
   );
 
@@ -1043,6 +1051,10 @@ export default function Home() {
                     préparer. S'ils peuvent former une paire avec un écran usagé dépareillé d'une autre agence (ou
                     entre eux), ils ne comptent plus non plus comme surplus — même s'ils restent à récupérer sur
                     place.
+                    <br />
+                    Les écrans connus comme étant HS (hors service) sont eux aussi exclus des écrans neufs à
+                    préparer, mais ne comptent jamais comme surplus ni ne peuvent former de paire : ils apparaissent
+                    toujours intégralement dans la liste "à récupérer", séparément du surplus.
                   </span>
                 ) : null}
               </p>
@@ -1071,11 +1083,23 @@ export default function Home() {
             ) : null}
             {leftoverScreensTally.length > 0 ? (
               <>
-                <h3>Écrans en surplus par modèle</h3>
+                <h3>Écrans à récupérer par modèle</h3>
                 <ul className="screenTallyList">
                   {leftoverScreensTally.map((item) => (
                     <li key={`${item.brand}-${item.model}-leftover`}>
-                      {item.brand} {item.model} — <strong>{item.leftover}</strong> écran en surplus
+                      {item.brand} {item.model}
+                      {item.leftover > 0 ? (
+                        <>
+                          {" — "}
+                          <strong>{item.leftover}</strong> écran{item.leftover > 1 ? "s" : ""} en surplus
+                        </>
+                      ) : null}
+                      {item.hsCount > 0 ? (
+                        <>
+                          {item.leftover > 0 ? " · " : " — "}
+                          <strong>{item.hsCount}</strong> <span className="hsBadge">HS</span>
+                        </>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

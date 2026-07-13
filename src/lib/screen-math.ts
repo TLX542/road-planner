@@ -82,7 +82,9 @@ export function leftoverScreensForCount(count: number, brand?: string): number {
 // `installedCount` / `stockCount` should already be pooled across every
 // agency in scope for the model, so this mirrors the existing cross-agency
 // pooling that newScreensNeededForCount benefits from — it just extends
-// that pooling to stock as well as installed units.
+// that pooling to stock as well as installed units. Known HS/broken units
+// (see KNOWN_HS_SCREENS below) must NOT be folded into either argument —
+// they never pair with anything and are tallied separately by the caller.
 export function combinedLeftoverForModel(installedCount: number, stockCount: number, brand?: string): number {
   const safeInstalledCount = Number.isFinite(installedCount) && installedCount > 0 ? installedCount : 0;
   const safeStockCount = Number.isFinite(stockCount) && stockCount > 0 ? stockCount : 0;
@@ -95,32 +97,47 @@ export function combinedLeftoverForModel(installedCount: number, stockCount: num
 }
 
 // ---------------------------------------------------------------------
-// Known unused stock
+// Known unused stock & known HS (out-of-service / broken) screens
 // ---------------------------------------------------------------------
 //
-// A handful of specific units recorded in the spreadsheet aren't actually
-// installed on a wall anywhere — they're spares sitting in an agency's
-// stock room. They still need to be picked up during a visit (so they
-// belong in the "surplus to retrieve" tally), but since there's no active
-// screen for them to replace, they should never count toward "new screens
-// to prepare".
+// Two separate lists of specific units recorded in the spreadsheet that
+// aren't ordinary installed screens:
 //
-// Add entries here as more of these turn up. Omit `agencyName` for a model
-// that's spare stock everywhere it appears (matched at every agency);
-// provide a city/name fragment to scope it to one specific agency. `count`
-// defaults to 1 (one spare unit) and only needs to be set for more.
-type UnusedStockEntry = {
+//   - KNOWN_UNUSED_STOCK: spares sitting in an agency's stock room, still
+//     fully working. They still need to be picked up during a visit, and
+//     since they're identical working units they can pair up with a
+//     stranded installed leftover elsewhere (see combinedLeftoverForModel)
+//     — once paired that way they drop out of the surplus tally too, even
+//     though they still need retrieving.
+//   - KNOWN_HS_SCREENS: broken/out-of-service units. They also still need
+//     picking up, but unlike stock they never pair with anything (a broken
+//     screen can't complete a redeployable pair) and never reduce another
+//     model's totals — they're simply always counted, in full, toward the
+//     "screens to bring home" tally and nowhere else.
+//
+// Either way, neither list ever feeds newScreensNeededForCount: there's no
+// active installed screen to replace for either a stock spare or an HS
+// unit.
+//
+// Add entries to either list as more of these turn up. Omit `agencyName`
+// for a model that matches everywhere it appears; provide a city/name
+// fragment to scope it to one specific agency. `count` defaults to 1 (one
+// spare/broken unit) and only needs to be set for more.
+type ScreenFlagEntry = {
   agencyName?: string;
   brand: string;
   model: string;
   count?: number;
 };
 
-const KNOWN_UNUSED_STOCK: UnusedStockEntry[] = [
+const KNOWN_UNUSED_STOCK: ScreenFlagEntry[] = [
   { agencyName: "RENNES", brand: "IIYAMA", model: "E2482HD-B1" },
-  { agencyName: "LYON", brand: "IIYAMA", model: "XUB2493HS-B5" },
   { brand: "Philips", model: "223V5LSB2/10" },
 ];
+
+// Broken/out-of-service units — see the comment above for how these differ
+// from KNOWN_UNUSED_STOCK.
+const KNOWN_HS_SCREENS: ScreenFlagEntry[] = [{ agencyName: "LYON", brand: "IIYAMA", model: "XUB2493HS-B5" }];
 
 // Case/accent-insensitive so "Épinal", "epinal", "RENNES", "Groupe Rennes",
 // etc. all match consistently regardless of exactly how the spreadsheet
@@ -133,12 +150,15 @@ function normalizeForMatch(value: string): string {
     .toUpperCase();
 }
 
-function unusedStockCountFor(agencyName: string, brand: string, model: string): number {
+// Shared matcher for both KNOWN_UNUSED_STOCK and KNOWN_HS_SCREENS — same
+// (agency, brand, model) matching rules, just applied against whichever
+// list the caller passes in.
+function flaggedCountFor(entries: ScreenFlagEntry[], agencyName: string, brand: string, model: string): number {
   const normalizedAgency = normalizeForMatch(agencyName);
   const normalizedBrand = normalizeForMatch(brand);
   const normalizedModel = normalizeForMatch(model);
 
-  return KNOWN_UNUSED_STOCK.reduce((total, entry) => {
+  return entries.reduce((total, entry) => {
     if (normalizeForMatch(entry.brand) !== normalizedBrand || normalizeForMatch(entry.model) !== normalizedModel) {
       return total;
     }
@@ -150,22 +170,29 @@ function unusedStockCountFor(agencyName: string, brand: string, model: string): 
 }
 
 // Splits a recorded (brand, model, count) at a given agency into the units
-// that are actually installed — and therefore need a matching new screen —
-// versus units known to just be spare stock at that agency. `stockCount`
-// still needs retrieving, it just never feeds newScreensNeededForCount.
+// that are actually installed (and therefore need a matching new screen),
+// known spare stock, and known HS/broken units. `stockCount` and `hsCount`
+// both still need retrieving, but neither ever feeds
+// newScreensNeededForCount, and hsCount never feeds combinedLeftoverForModel
+// either (see the section comment above).
 export function splitInstalledAndStockCount(
   agencyName: string,
   screen: { brand: string; model: string; count: number },
-): { installedCount: number; stockCount: number } {
-  const knownStock = unusedStockCountFor(agencyName, screen.brand, screen.model);
+): { installedCount: number; stockCount: number; hsCount: number } {
+  const knownStock = flaggedCountFor(KNOWN_UNUSED_STOCK, agencyName, screen.brand, screen.model);
   const stockCount = Math.min(knownStock, screen.count);
-  return { installedCount: screen.count - stockCount, stockCount };
+
+  const knownHs = flaggedCountFor(KNOWN_HS_SCREENS, agencyName, screen.brand, screen.model);
+  const hsCount = Math.min(knownHs, screen.count - stockCount);
+
+  return { installedCount: screen.count - stockCount - hsCount, stockCount, hsCount };
 }
 
 // Convenience for callers (like the per-agency tally) that just want a
-// screens array with stock units already excluded from `count`, so it can
-// be dropped straight into newScreensNeededForCount / totalNewScreensNeeded
-// without them needing to know about the stock split at all.
+// screens array with stock and HS units already excluded from `count`, so
+// it can be dropped straight into newScreensNeededForCount /
+// totalNewScreensNeeded without them needing to know about the split at
+// all.
 export function withoutKnownStock<T extends { brand: string; model: string; count: number }>(
   agencyName: string,
   screens: T[],

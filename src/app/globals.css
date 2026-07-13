@@ -568,6 +568,26 @@ button:focus-visible {
   font-size: 0.92rem;
 }
 
+/* Small inline pill for HS (out-of-service) screens in the "à récupérer"
+   sidebar list — same danger color as .agencyTooltipHs on the map marker
+   tooltip, so the two stay visually consistent. */
+.hsBadge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+[data-theme="dark"] .hsBadge {
+  background: #450a0a;
+  color: #fca5a5;
+}
+
 .plannerSection summary {
   font-weight: 700;
   cursor: pointer;
@@ -777,6 +797,15 @@ input:disabled {
   font-weight: 600;
   font-size: 0.8em;
   font-style: italic;
+}
+
+/* Broken/out-of-service units — deliberately uses the danger color instead
+   of the neutral stock styling above, since HS is a "this is broken, pick
+   it up" flag rather than just informational. */
+.agencyTooltipHs {
+  color: var(--danger);
+  font-weight: 700;
+  font-size: 0.8em;
 }
 
 .agencyTooltipNewTotal {

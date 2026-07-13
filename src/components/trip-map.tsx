@@ -98,14 +98,18 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
     .map((screen) => {
       const label = `${escapeHtml(screen.brand)} ${escapeHtml(screen.model)}`;
       const suffix = screen.count > 1 ? ` &times;${screen.count}` : "";
-      const { installedCount, stockCount } = splitInstalledAndStockCount(agency.name, screen);
+      const { installedCount, stockCount, hsCount } = splitInstalledAndStockCount(agency.name, screen);
       const newNeeded = newScreensNeededForCount(installedCount, screen.brand);
       const newNeededHtml = newNeeded > 0 ? ` <span class="agencyTooltipNew">+${newNeeded} neuf${newNeeded > 1 ? "s" : ""}</span>` : "";
       // Known unused stock (see lib/screen-math.ts) never needs a new
       // screen, but it's still worth flagging on the marker so it's clear
       // why this unit isn't contributing to the "+N neuf" figure above.
       const stockHtml = stockCount > 0 ? ` <span class="agencyTooltipStock">${stockCount} en stock</span>` : "";
-      return `<li>${label}${suffix}${newNeededHtml}${stockHtml}</li>`;
+      // Known HS/broken units get their own distinct (danger-colored) badge
+      // — unlike stock, they're never a candidate for pairing/redeployment,
+      // just a straightforward "pick this up" flag.
+      const hsHtml = hsCount > 0 ? ` <span class="agencyTooltipHs">${hsCount} HS</span>` : "";
+      return `<li>${label}${suffix}${newNeededHtml}${stockHtml}${hsHtml}</li>`;
     })
     .join("");
 
