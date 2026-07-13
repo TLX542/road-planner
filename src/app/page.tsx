@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { TripMap, type AgencyClickMode, type AgencyMarker } from "@/components/trip-map";
-import { newScreensNeededForCount, leftoverScreensForCount, totalNewScreensNeeded } from "@/lib/screen-math";
+import { newScreensNeededForCount, leftoverScreensForCount, totalNewScreensNeeded, splitInstalledAndStockCount, withoutKnownStock } from "@/lib/screen-math";
 
 type TripLeg = {
   from: string;
@@ -383,8 +383,13 @@ export default function Home() {
   // once. Visited agencies are excluded too: once a stop has actually been
   // handled, its screens are no longer "still to prepare" and shouldn't
   // inflate the totals below.
+  //
+  // `count` here is installed units only — known unused stock (spares
+  // sitting in an agency's stock room, see lib/screen-math.ts) is split
+  // out into `stockCount` instead, so it never feeds newScreensNeededForCount
+  // but still surfaces in the surplus list further down.
   const screenTally = useMemo(() => {
-    const tally = new Map<string, { brand: string; model: string; count: number }>();
+    const tally = new Map<string, { brand: string; model: string; count: number; stockCount: number }>();
 
     selectedAgencyIds.forEach((agencyId) => {
       const agency = agencies.find((candidate) => candidate.id === agencyId);
@@ -393,12 +398,14 @@ export default function Home() {
       }
 
       agency.screens.forEach((screen) => {
+        const { installedCount, stockCount } = splitInstalledAndStockCount(agency.name, screen);
         const key = `${screen.brand}\u0000${screen.model}`;
         const existing = tally.get(key);
         if (existing) {
-          existing.count += screen.count;
+          existing.count += installedCount;
+          existing.stockCount += stockCount;
         } else {
-          tally.set(key, { brand: screen.brand, model: screen.model, count: screen.count });
+          tally.set(key, { brand: screen.brand, model: screen.model, count: installedCount, stockCount });
         }
       });
     });
@@ -416,7 +423,9 @@ export default function Home() {
   // Same new-screens math, but broken down per agency instead of pooled
   // across the whole trip — so e.g. "Montigny — 6 écrans neufs" is visible
   // alongside the road-trip-wide total above. Visited agencies are skipped
-  // here too, for the same reason as screenTally above.
+  // here too, for the same reason as screenTally above. Known stock units
+  // are excluded before the math runs (withoutKnownStock), same as the
+  // pooled tally.
   const agencyNewScreensTally = useMemo(() => {
     const rows: { id: string; name: string; newScreens: number }[] = [];
 
@@ -429,7 +438,7 @@ export default function Home() {
       rows.push({
         id: agency.id,
         name: agency.name,
-        newScreens: totalNewScreensNeeded(agency.screens),
+        newScreens: totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens)),
       });
     });
 
@@ -448,13 +457,18 @@ export default function Home() {
     [agencyNewScreensTally],
   );
 
-  // Models where the pooled old-stock count is odd, so one old unit has no
-  // old partner to pair with (see leftoverScreensForCount) — always 0 or 1
-  // per model, e.g. seven of the same model leaves one leftover.
+  // Models where either the pooled old-stock count is odd (see
+  // leftoverScreensForCount — one old unit with no partner to pair with)
+  // or there's known unused stock at an agency for that model. Either way
+  // these are units to physically retrieve that don't factor into the
+  // new-screens totals above.
   const leftoverScreensTally = useMemo(
     () =>
       screenTally
-        .map((item) => ({ ...item, leftover: leftoverScreensForCount(item.count, item.brand) }))
+        .map((item) => ({
+          ...item,
+          leftover: leftoverScreensForCount(item.count, item.brand) + item.stockCount,
+        }))
         .filter((item) => item.leftover > 0),
     [screenTally],
   );
@@ -877,22 +891,24 @@ export default function Home() {
           <section className="resultsCard" aria-live="polite">
             <h2>Écrans pour l'ensemble du road trip</h2>
             <ul className="screenTallyList">
-              {screenTally.map((item) => {
-                const newNeeded = newScreensNeededForCount(item.count, item.brand);
-                return (
-                  <li key={`${item.brand}-${item.model}`}>
-                    {item.brand} {item.model}
-                    {item.count > 1 ? ` ×${item.count}` : ""}
-                    {newNeeded > 0 ? (
-                      <>
-                        {" — "}
-                        <strong>{newNeeded}</strong> écran{newNeeded > 1 ? "s" : ""} neuf
-                        {newNeeded > 1 ? "s" : ""} à préparer
-                      </>
-                    ) : null}
-                  </li>
-                );
-              })}
+              {screenTally
+                .filter((item) => item.count > 0)
+                .map((item) => {
+                  const newNeeded = newScreensNeededForCount(item.count, item.brand);
+                  return (
+                    <li key={`${item.brand}-${item.model}`}>
+                      {item.brand} {item.model}
+                      {item.count > 1 ? ` ×${item.count}` : ""}
+                      {newNeeded > 0 ? (
+                        <>
+                          {" — "}
+                          <strong>{newNeeded}</strong> écran{newNeeded > 1 ? "s" : ""} neuf
+                          {newNeeded > 1 ? "s" : ""} à préparer
+                        </>
+                      ) : null}
+                    </li>
+                  );
+                })}
             </ul>
             {totalNewScreens > 0 ? (
               <p>
@@ -937,6 +953,9 @@ export default function Home() {
                     </b>
                     <br />
                     Les agences marquées comme visitées ne sont plus comptées dans ces totaux.
+                    <br />
+                    Certains écrans connus comme étant en stock (non installés) sont exclus des écrans neufs à
+                    préparer, mais restent comptés dans les écrans en surplus à récupérer.
                   </span>
                 ) : null}
               </p>

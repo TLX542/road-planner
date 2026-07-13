@@ -63,3 +63,85 @@ export function leftoverScreensForCount(count: number, brand?: string): number {
 
   return count % 2;
 }
+
+// ---------------------------------------------------------------------
+// Known unused stock
+// ---------------------------------------------------------------------
+//
+// A handful of specific units recorded in the spreadsheet aren't actually
+// installed on a wall anywhere — they're spares sitting in an agency's
+// stock room. They still need to be picked up during a visit (so they
+// belong in the "surplus to retrieve" tally), but since there's no active
+// screen for them to replace, they should never count toward "new screens
+// to prepare".
+//
+// Add entries here as more of these turn up. Omit `agencyName` for a model
+// that's spare stock everywhere it appears (matched at every agency);
+// provide a city/name fragment to scope it to one specific agency. `count`
+// defaults to 1 (one spare unit) and only needs to be set for more.
+type UnusedStockEntry = {
+  agencyName?: string;
+  brand: string;
+  model: string;
+  count?: number;
+};
+
+const KNOWN_UNUSED_STOCK: UnusedStockEntry[] = [
+  { agencyName: "RENNES", brand: "IIYAMA", model: "E2482HD-B1" },
+  { agencyName: "LYON", brand: "IIYAMA", model: "XUB2493HS-B5" },
+  { brand: "Philips", model: "223V5LSB2/10" },
+];
+
+// Case/accent-insensitive so "Épinal", "epinal", "RENNES", "Groupe Rennes",
+// etc. all match consistently regardless of exactly how the spreadsheet
+// spells a given agency or brand name.
+function normalizeForMatch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toUpperCase();
+}
+
+function unusedStockCountFor(agencyName: string, brand: string, model: string): number {
+  const normalizedAgency = normalizeForMatch(agencyName);
+  const normalizedBrand = normalizeForMatch(brand);
+  const normalizedModel = normalizeForMatch(model);
+
+  return KNOWN_UNUSED_STOCK.reduce((total, entry) => {
+    if (normalizeForMatch(entry.brand) !== normalizedBrand || normalizeForMatch(entry.model) !== normalizedModel) {
+      return total;
+    }
+    if (entry.agencyName !== undefined && !normalizedAgency.includes(normalizeForMatch(entry.agencyName))) {
+      return total;
+    }
+    return total + (entry.count ?? 1);
+  }, 0);
+}
+
+// Splits a recorded (brand, model, count) at a given agency into the units
+// that are actually installed — and therefore need a matching new screen —
+// versus units known to just be spare stock at that agency. `stockCount`
+// still needs retrieving, it just never feeds newScreensNeededForCount.
+export function splitInstalledAndStockCount(
+  agencyName: string,
+  screen: { brand: string; model: string; count: number },
+): { installedCount: number; stockCount: number } {
+  const knownStock = unusedStockCountFor(agencyName, screen.brand, screen.model);
+  const stockCount = Math.min(knownStock, screen.count);
+  return { installedCount: screen.count - stockCount, stockCount };
+}
+
+// Convenience for callers (like the per-agency tally) that just want a
+// screens array with stock units already excluded from `count`, so it can
+// be dropped straight into newScreensNeededForCount / totalNewScreensNeeded
+// without them needing to know about the stock split at all.
+export function withoutKnownStock<T extends { brand: string; model: string; count: number }>(
+  agencyName: string,
+  screens: T[],
+): T[] {
+  return screens.map((screen) => ({
+    ...screen,
+    count: splitInstalledAndStockCount(agencyName, screen).installedCount,
+  }));
+}

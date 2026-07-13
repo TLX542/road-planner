@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { newScreensNeededForCount, totalNewScreensNeeded } from "@/lib/screen-math";
+import { newScreensNeededForCount, totalNewScreensNeeded, splitInstalledAndStockCount, withoutKnownStock } from "@/lib/screen-math";
 
 type Coordinate = { lat: number; lon: number };
 
@@ -88,9 +88,14 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
     .map((screen) => {
       const label = `${escapeHtml(screen.brand)} ${escapeHtml(screen.model)}`;
       const suffix = screen.count > 1 ? ` &times;${screen.count}` : "";
-      const newNeeded = newScreensNeededForCount(screen.count);
+      const { installedCount, stockCount } = splitInstalledAndStockCount(agency.name, screen);
+      const newNeeded = newScreensNeededForCount(installedCount, screen.brand);
       const newNeededHtml = newNeeded > 0 ? ` <span class="agencyTooltipNew">+${newNeeded} neuf${newNeeded > 1 ? "s" : ""}</span>` : "";
-      return `<li>${label}${suffix}${newNeededHtml}</li>`;
+      // Known unused stock (see lib/screen-math.ts) never needs a new
+      // screen, but it's still worth flagging on the marker so it's clear
+      // why this unit isn't contributing to the "+N neuf" figure above.
+      const stockHtml = stockCount > 0 ? ` <span class="agencyTooltipStock">${stockCount} en stock</span>` : "";
+      return `<li>${label}${suffix}${newNeededHtml}${stockHtml}</li>`;
     })
     .join("");
 
@@ -101,7 +106,7 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
   const hintText =
     mode === "waypoint" ? "Cliquez sur le marqueur pour l'ajouter comme prochaine étape" : "Cliquez sur le marqueur pour basculer visité";
 
-  const totalNew = totalNewScreensNeeded(agency.screens);
+  const totalNew = totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens));
   const totalNewHtml =
     totalNew > 0 ? `<span class="agencyTooltipNewTotal">${totalNew} écran${totalNew > 1 ? "s" : ""} neuf${totalNew > 1 ? "s" : ""} nécessaire${totalNew > 1 ? "s" : ""}</span>` : "";
 

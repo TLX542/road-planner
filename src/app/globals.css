@@ -754,6 +754,17 @@ input:disabled {
   font-size: 0.8em;
 }
 
+/* Flags a unit as known unused stock (see lib/screen-math.ts) rather than
+   an installed screen — muted/neutral on purpose, unlike the amber "new
+   screens needed" badge, since it's informational rather than an action
+   item beyond "bring it back". */
+.agencyTooltipStock {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.8em;
+  font-style: italic;
+}
+
 .agencyTooltipNewTotal {
   display: inline-block;
   width: fit-content;
