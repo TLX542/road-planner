@@ -237,6 +237,21 @@ body {
   gap: 0.75rem;
 }
 
+.sectionHeadingActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.clearStopsButton {
+  color: var(--muted);
+}
+
+.clearStopsButton:hover:not(:disabled) {
+  color: #c0392b;
+  border-color: #c0392b;
+}
+
 .sectionHeading h2,
 .resultsCard h2 {
   font-size: 1.05rem;

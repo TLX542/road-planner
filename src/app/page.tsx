@@ -402,6 +402,18 @@ export default function Home() {
 
   const canCalculate = stopsValid && !trip.loading;
 
+  // "Tout effacer" is only meaningful — and only enabled — if there's
+  // something to clear: a step with actual text in it, or more than the
+  // default two blank slots, or a previously calculated result/error.
+  const canClearStops = useMemo(
+    () =>
+      trip.stops.some((stop) => stop.trim().length > 0) ||
+      trip.stops.length > 2 ||
+      trip.result !== null ||
+      trip.error !== "",
+    [trip.stops, trip.result, trip.error],
+  );
+
   // The calculated route, split into its individual legs so each leg can
   // carry its own shade.
   const mapRoutes = useMemo(() => {
@@ -804,6 +816,13 @@ export default function Home() {
     }));
   };
 
+  // Resets the itinerary back to a blank two-stop trip (origin +
+  // destination) and clears out whatever was last calculated, since a
+  // cleared set of steps no longer matches that route/result.
+  const clearStops = () => {
+    updateTrip(() => createTrip());
+  };
+
   const removeStop = (index: number) => {
     updateTrip((current) => ({
       ...current,
@@ -1129,9 +1148,14 @@ export default function Home() {
           <section className="plannerSection">
             <div className="sectionHeading">
               <h2>Étapes</h2>
-              <button type="button" onClick={addStop} disabled={trip.loading}>
-                + Ajouter une étape
-              </button>
+              <div className="sectionHeadingActions">
+                <button type="button" className="clearStopsButton" onClick={clearStops} disabled={trip.loading || !canClearStops}>
+                  Tout effacer
+                </button>
+                <button type="button" onClick={addStop} disabled={trip.loading}>
+                  + Ajouter une étape
+                </button>
+              </div>
             </div>
             <ol className="itineraryOutline">
               {trip.stops.map((stop, index) => (
