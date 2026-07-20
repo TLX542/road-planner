@@ -831,6 +831,17 @@ export default function Home() {
     }));
   };
 
+  // Used instead of removeStop when only the origin and destination remain
+  // (i.e. there's no row left that *can* be removed): empties that row's
+  // text and drops its agency link, but keeps the row itself in place.
+  const clearStop = (index: number) => {
+    updateTrip((current) => ({
+      ...current,
+      stops: current.stops.map((stop, stopIndex) => (stopIndex === index ? "" : stop)),
+      stopAgencyIds: current.stopAgencyIds.map((agencyId, stopIndex) => (stopIndex === index ? null : agencyId)),
+    }));
+  };
+
   const moveStop = (index: number, direction: -1 | 1) => {
     const target = index + direction;
     if (target < 0 || target >= trip.stops.length) {
@@ -1222,13 +1233,23 @@ export default function Home() {
                     >
                       ↓
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => removeStop(index)}
-                      disabled={trip.loading || trip.stops.length <= 2}
-                    >
-                      Supprimer
-                    </button>
+                    {trip.stops.length <= 2 ? (
+                      <button
+                        type="button"
+                        onClick={() => clearStop(index)}
+                        disabled={trip.loading || stop.trim() === ""}
+                      >
+                        Effacer
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => removeStop(index)}
+                        disabled={trip.loading}
+                      >
+                        Supprimer
+                      </button>
+                    )}
                   </div>
                 </div>
               );
