@@ -58,6 +58,11 @@ type TripMapProps = {
   // what that means (toggle visited vs. insert as a waypoint) and any
   // persistence — this component just reports the click.
   onAgencyClick?: (agency: AgencyMarker) => void;
+  // When set (only true once the hidden click-sequence in page.tsx has
+  // been triggered and the photos have been fetched from Redis), every
+  // non-HQ agency marker renders as one of these two photos instead of a
+  // plain dot — still tinted per status so the map reads the same way.
+  easterEggImages?: { marc: string; nicolas: string } | null;
 };
 
 // Épinal is the head office, not just another agency — it gets its own
@@ -185,6 +190,28 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
 // effect below for no reason.
 const EMPTY_SELECTION: Set<string> = new Set();
 
+type AgencyStatus = "selected" | "visited" | "unvisited";
+
+// grayscale -> sepia -> hue-rotate is the classic "duotone" trick: it maps
+// the whole photo onto one hue instead of leaving skin tones/backgrounds
+// their original color, so each icon still reads at a glance as
+// blue/green/purple the same way the plain dot markers do.
+const EASTER_EGG_FILTERS: Record<AgencyStatus, string> = {
+  selected: "grayscale(1) brightness(0.95) sepia(1) hue-rotate(178deg) saturate(6)",
+  visited: "grayscale(1) brightness(1.05) sepia(1) hue-rotate(68deg) saturate(4.5)",
+  unvisited: "grayscale(1) brightness(0.92) sepia(1) hue-rotate(222deg) saturate(5)",
+};
+
+const EASTER_EGG_RING: Record<AgencyStatus, string> = {
+  selected: "#1d4ed8",
+  visited: "#16a34a",
+  unvisited: "#7c3aed",
+};
+
+function agencyStatus(agency: AgencyMarker, isSelected: boolean): AgencyStatus {
+  return isSelected ? "selected" : agency.visited ? "visited" : "unvisited";
+}
+
 export function TripMap({
   routes,
   activeStops,
@@ -192,6 +219,7 @@ export function TripMap({
   selectedAgencyIds = EMPTY_SELECTION,
   agencyClickMode = "visited",
   onAgencyClick,
+  easterEggImages = null,
 }: TripMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
@@ -203,6 +231,11 @@ export function TripMap({
   // depend on it (and therefore doesn't need to redraw markers just because
   // the parent re-created the callback).
   const onAgencyClickRef = useRef(onAgencyClick);
+  // Genuine per-agency coin flip (marc vs. nicolas), rolled once the first
+  // time that agency is drawn with the egg on and cached here so it stays
+  // put across re-renders instead of re-rolling (or worse, correlating with
+  // however agency ids happen to be generated) every redraw.
+  const easterEggAssignmentsRef = useRef<Map<string, "marc" | "nicolas">>(new Map());
   // Counts clicks on the headquarters (Épinal) marker specifically. Lives
   // outside the marker-render effect (which reruns and rebuilds every
   // marker whenever agencyMarkers/agencyClickMode/selectedAgencyIds
@@ -347,6 +380,46 @@ export function TripMap({
         // visited/selected color above — the two states are independent,
         // so a marker can be both "visited" and "has a comment" at once.
         const hasComment = Boolean(agency.comment?.trim());
+
+        if (easterEggImages) {
+          const status = agencyStatus(agency, isSelected);
+          const size = isSelected ? 34 : 28;
+
+          let assignment = easterEggAssignmentsRef.current.get(agency.id);
+          if (!assignment) {
+            assignment = Math.random() < 0.5 ? "marc" : "nicolas";
+            easterEggAssignmentsRef.current.set(agency.id, assignment);
+          }
+          const src = easterEggImages[assignment];
+          const eggIcon = L.divIcon({
+            className: "agencyEasterEggIconWrapper",
+            html: `<img class="agencyEasterEggIcon" src="${src}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;filter:${
+              EASTER_EGG_FILTERS[status]
+            };border:3px solid ${EASTER_EGG_RING[status]};box-shadow:0 2px 6px rgba(0,0,0,0.35);${
+              hasComment ? "outline:2px dashed #ffffff;outline-offset:2px;" : ""
+            }" alt="" />`,
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2],
+            tooltipAnchor: [0, -(size / 2 + 4)],
+          });
+
+          const eggMarker = L.marker([agency.lat, agency.lon], { icon: eggIcon });
+
+          eggMarker.bindTooltip(buildAgencyTooltipHtml(agency, agencyClickMode, isSelected), {
+            direction: "top",
+            sticky: true,
+            opacity: 1,
+            className: "agencyTooltipWrapper",
+          });
+
+          eggMarker.on("click", () => {
+            onAgencyClickRef.current?.(agency);
+          });
+
+          eggMarker.addTo(agencyLayer);
+          return;
+        }
+
         const marker = L.circleMarker([agency.lat, agency.lon], {
           ...style,
           dashArray: hasComment ? "3,3" : undefined,
@@ -368,7 +441,7 @@ export function TripMap({
     }
 
     renderAgencyMarkers();
-  }, [agencyMarkers, agencyClickMode, selectedAgencyIds]);
+  }, [agencyMarkers, agencyClickMode, selectedAgencyIds, easterEggImages]);
 
   useEffect(() => {
     async function renderRoutes() {

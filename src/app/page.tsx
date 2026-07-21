@@ -119,10 +119,43 @@ const AGENCY_CLICK_MODE_LABEL: Record<AgencyClickMode, string> = {
   comment: "💬 Ajouter un commentaire",
 };
 
+// Images live in Redis, not the repo (see app/api/easter-egg/route.ts) —
+// fetched only once someone actually finds the hidden trigger below.
+type EasterEggImages = { marc: string; nicolas: string };
+
 export default function Home() {
   const [trip, setTrip] = useState<TripState>(() => createTrip());
 
   const [theme, setTheme] = useState<Theme>("light");
+
+  // Hidden easter egg: 10 theme-toggle clicks, THEN 5 "+ Ajouter une étape"
+  // clicks, flips agency markers over to the secret photo icons (and back
+  // again if you do the same sequence a second time). Refs (not state) so
+  // tracking clicks never triggers a re-render on its own.
+  const easterEggThemeClicksRef = useRef(0);
+  const easterEggArmedRef = useRef(false);
+  const easterEggAddStopClicksRef = useRef(0);
+  const [easterEggOn, setEasterEggOn] = useState(false);
+  const [easterEggImages, setEasterEggImages] = useState<EasterEggImages | null>(null);
+
+  const toggleEasterEgg = useCallback(() => {
+    setEasterEggOn((current) => {
+      const next = !current;
+      if (next && !easterEggImages) {
+        fetch("/api/easter-egg")
+          .then((response) => (response.ok ? (response.json() as Promise<EasterEggImages>) : null))
+          .then((data) => {
+            if (data) {
+              setEasterEggImages(data);
+            }
+          })
+          .catch(() => {
+            // Silently do nothing — worst case the markers just stay normal.
+          });
+      }
+      return next;
+    });
+  }, [easterEggImages]);
 
   // Both floating "islands" become bottom sheets on narrow screens (see the
   // max-width: 760px block in globals.css) — collapsed to a small peek strip
@@ -379,6 +412,11 @@ export default function Home() {
   );
 
   const toggleTheme = () => {
+    easterEggThemeClicksRef.current += 1;
+    if (easterEggThemeClicksRef.current >= 10) {
+      easterEggArmedRef.current = true;
+    }
+
     setTheme((current) => {
       const next: Theme = current === "dark" ? "light" : "dark";
       document.documentElement.dataset.theme = next;
@@ -809,6 +847,16 @@ export default function Home() {
   };
 
   const addStop = () => {
+    if (easterEggArmedRef.current) {
+      easterEggAddStopClicksRef.current += 1;
+      if (easterEggAddStopClicksRef.current >= 5) {
+        easterEggArmedRef.current = false;
+        easterEggThemeClicksRef.current = 0;
+        easterEggAddStopClicksRef.current = 0;
+        toggleEasterEgg();
+      }
+    }
+
     updateTrip((current) => ({
       ...current,
       stops: [...current.stops, ""],
@@ -947,6 +995,7 @@ export default function Home() {
           selectedAgencyIds={selectedAgencyIds}
           agencyClickMode={agencyClickMode}
           onAgencyClick={handleAgencyMarkerClick}
+          easterEggImages={easterEggOn ? easterEggImages : null}
         />
       </section>
 
