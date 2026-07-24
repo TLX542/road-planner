@@ -613,6 +613,28 @@ export default function Home() {
     [screenTally],
   );
 
+  // Freeform notes left on agencies via the comment popup (see
+  // openCommentEditor / saveAgencyComment above), surfaced here so they're
+  // visible at a glance instead of having to reopen each agency's popup.
+  // Shown regardless of visited status — a note (access code, contact on
+  // site, etc.) can still be useful after a stop is marked visited — and
+  // sorted alphabetically like the other per-agency breakdowns.
+  const agencyCommentsTally = useMemo(() => {
+    const rows: { id: string; name: string; comment: string }[] = [];
+
+    selectedAgencyIds.forEach((agencyId) => {
+      const agency = agencies.find((candidate) => candidate.id === agencyId);
+      const comment = agency?.comment?.trim();
+      if (!agency || !comment) {
+        return;
+      }
+
+      rows.push({ id: agency.id, name: agency.name, comment });
+    });
+
+    return rows.sort((a, b) => a.name.localeCompare(b.name));
+  }, [selectedAgencyIds, agencies]);
+
   const updateTrip = useCallback((updater: (current: TripState) => TripState) => {
     setTrip((current) => updater(current));
   }, []);
@@ -1106,6 +1128,20 @@ export default function Home() {
                 ) : null}
               </p>
 
+            ) : null}
+            {agencyCommentsTally.length > 0 ? (
+              <>
+                <h3>Informations complémentaires</h3>
+                <ul className="screenTallyList agencyCommentsList">
+                  {agencyCommentsTally.map((agency) => (
+                    <li key={agency.id}>
+                      <strong>{agency.name}</strong>
+                      {" — "}
+                      {agency.comment}
+                    </li>
+                  ))}
+                </ul>
+              </>
             ) : null}
             {agencyNewScreensTally.length > 0 ? (
               <>
