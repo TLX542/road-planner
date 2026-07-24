@@ -1,5 +1,4 @@
-import agenciesSource from "@/data/agencies-source.json";
-import agencyCoordinates from "@/data/agency-coordinates.json";
+import { Redis } from "@upstash/redis";
 
 export type AgencyScreen = {
   brand: string;
@@ -20,21 +19,52 @@ export type GeocodedAgency = AgencyRecord & {
   lon: number;
 };
 
-// Auto-generated from suivi_ecrans.xlsx — one entry per agency ("Groupe"),
-// with its address and the de-duplicated list of screens installed there.
-// Regenerate data/agencies-source.json by re-running the extraction against
-// a refreshed export.
-export const AGENCIES: AgencyRecord[] = agenciesSource as AgencyRecord[];
-
 type CoordinateMap = Record<string, { lat: number; lon: number }>;
 
-// Populated by `node scripts/geocode-agencies.mjs` (run locally/in CI, not
-// at request time — see that script for why). Agencies not yet in the map
-// are simply left off the returned list rather than breaking anything.
-export function getGeocodedAgencies(): GeocodedAgency[] {
-  const coordinates = agencyCoordinates as CoordinateMap;
+const AGENCIES_SOURCE_KEY = "agencies:source";
+const AGENCY_COORDINATES_KEY = "agencies:coordinates";
 
-  return AGENCIES.flatMap((agency) => {
+// Same client/env-var convention as lib/visited-agencies.ts.
+const redis = Redis.fromEnv();
+
+// These only change when scripts/seed-agencies.mjs is re-run (i.e. when
+// suivi_ecrans.xlsx is re-extracted or coordinates are regenerated) — not
+// on every request — so a warm serverless instance can safely cache them
+// in module scope instead of round-tripping to Redis each time.
+let cachedAgencies: AgencyRecord[] | null = null;
+let cachedCoordinates: CoordinateMap | null = null;
+
+async function loadAgencies(): Promise<AgencyRecord[]> {
+  if (cachedAgencies) return cachedAgencies;
+
+  const data = await redis.get<AgencyRecord[]>(AGENCIES_SOURCE_KEY);
+  if (!data) {
+    throw new Error(
+      `No agency data found in Redis at "${AGENCIES_SOURCE_KEY}". Run scripts/seed-agencies.mjs first.`,
+    );
+  }
+  cachedAgencies = data;
+  return data;
+}
+
+async function loadCoordinates(): Promise<CoordinateMap> {
+  if (cachedCoordinates) return cachedCoordinates;
+
+  const data = await redis.get<CoordinateMap>(AGENCY_COORDINATES_KEY);
+  // Missing coordinates is non-fatal — same behavior as before: agencies
+  // without a coordinate entry are just left off the geocoded list.
+  cachedCoordinates = data ?? {};
+  return cachedCoordinates;
+}
+
+export async function getAgencies(): Promise<AgencyRecord[]> {
+  return loadAgencies();
+}
+
+export async function getGeocodedAgencies(): Promise<GeocodedAgency[]> {
+  const [agencies, coordinates] = await Promise.all([loadAgencies(), loadCoordinates()]);
+
+  return agencies.flatMap((agency) => {
     const coordinate = coordinates[agency.id];
     return coordinate ? [{ ...agency, ...coordinate }] : [];
   });

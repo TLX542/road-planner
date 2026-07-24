@@ -5,27 +5,24 @@
 //
 //   node scripts/geocode-agencies.mjs
 //
-// It reads data/agencies-source.json, geocodes any agency that isn't
-// already in data/agency-coordinates.json, and writes the result back to
-// that file — respecting Nominatim's ~1 request/second usage policy.
-// Commit the updated data/agency-coordinates.json afterwards; the app reads
-// it as a static import, so there is nothing to geocode at request time.
-import { readFile, writeFile } from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+// Reads the agency list from Redis (agencies:source — seeded there by
+// scripts/seed-agencies.mjs from src/data/agencies-source.json), geocodes
+// any agency that isn't already in the Redis coordinate cache
+// (agencies:coordinates), and writes each result straight back to Redis as
+// it goes — respecting Nominatim's ~1 request/second usage policy. There is
+// no local agency-coordinates.json anymore; Redis is the only copy, same as
+// the easter-egg photos.
+//
+// Requires the same Redis env vars as the app (UPSTASH_REDIS_REST_URL /
+// UPSTASH_REDIS_REST_TOKEN, or whatever your Vercel integration named them —
+// check .env.local).
+import { Redis } from "@upstash/redis";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SOURCE_PATH = path.join(__dirname, "..", "src", "data", "agencies-source.json");
-const CACHE_PATH = path.join(__dirname, "..", "src", "data", "agency-coordinates.json");
+const AGENCIES_SOURCE_KEY = "agencies:source";
+const AGENCY_COORDINATES_KEY = "agencies:coordinates";
 const NOMINATIM_DELAY_MS = 1100;
 
-async function readJson(filePath, fallback) {
-  try {
-    return JSON.parse(await readFile(filePath, "utf-8"));
-  } catch {
-    return fallback;
-  }
-}
+const redis = Redis.fromEnv();
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -95,8 +92,15 @@ async function geocodeOne(agency) {
 }
 
 async function main() {
-  const agencies = await readJson(SOURCE_PATH, []);
-  const cache = await readJson(CACHE_PATH, {});
+  const agencies = await redis.get(AGENCIES_SOURCE_KEY);
+  if (!agencies) {
+    console.error(
+      `No agency data found in Redis at "${AGENCIES_SOURCE_KEY}". Run scripts/seed-agencies.mjs first.`,
+    );
+    process.exit(1);
+  }
+
+  const cache = (await redis.get(AGENCY_COORDINATES_KEY)) ?? {};
 
   const pending = agencies.filter((agency) => !cache[agency.id]);
   console.log(`${agencies.length} agencies total, ${pending.length} need geocoding.`);
@@ -106,17 +110,18 @@ async function main() {
     if (result) {
       cache[agency.id] = result;
       console.log(`  ✓ (${index + 1}/${pending.length}) ${agency.name} -> ${result.lat}, ${result.lon}`);
+
+      // Save progress after every lookup so an interrupted run doesn't lose
+      // work — same as the old file-write-per-iteration behavior.
+      await redis.set(AGENCY_COORDINATES_KEY, cache);
     }
 
-    // Save progress after every lookup so an interrupted run doesn't lose work.
-    await writeFile(CACHE_PATH, JSON.stringify(cache, null, 2) + "\n", "utf-8");
-
     if (index < pending.length - 1) {
-      await new Promise((resolve) => setTimeout(resolve, NOMINATIM_DELAY_MS));
+      await sleep(NOMINATIM_DELAY_MS);
     }
   }
 
-  console.log("Done. data/agency-coordinates.json is up to date.");
+  console.log("Done. Redis agencies:coordinates is up to date.");
 }
 
 main().catch((error) => {

@@ -15,7 +15,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 const [marcPath, nicolasPath] = process.argv.slice(2);
-const secret = "super_variable123";
+const secret = process.env.EASTER_EGG_SEED_SECRET;
 const baseUrl = process.env.EASTER_EGG_BASE_URL ?? "http://localhost:3000";
 
 if (!marcPath || !nicolasPath) {
