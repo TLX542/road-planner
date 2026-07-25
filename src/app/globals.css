@@ -190,6 +190,29 @@ body {
   border-color: var(--primary);
 }
 
+/* Same pill shape/weight as .themeToggle — sits between it and the agency
+   mode toggle in .headerActions, opening the blank agency form. */
+.addAgencyButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-alt);
+  color: var(--text);
+  padding: 0.45rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addAgencyButton:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 /* Groups the theme toggle with the agency-click-mode toggle so they read as
    one set of header controls. Stacked vertically (agency mode under theme)
    on desktop; switched to a side-by-side row on mobile — see the
@@ -204,6 +227,7 @@ body {
 }
 
 .headerActions .themeToggle,
+.headerActions .addAgencyButton,
 .headerActions .agencyModeToggle {
   width: 100%;
   box-sizing: border-box;
@@ -334,6 +358,15 @@ button:focus-visible {
 .agencyModeToggle.mode-comment {
   background: #7c3aed;
   border-color: #7c3aed;
+  color: #fff;
+}
+
+/* Fourth mode, fourth color — amber to stay distinct from the blue/green/
+   purple used by the other three and from the danger red used elsewhere
+   for destructive actions (this mode opens an edit form, not a delete). */
+.agencyModeToggle.mode-edit {
+  background: #ea580c;
+  border-color: #ea580c;
   color: #fff;
 }
 
@@ -954,6 +987,106 @@ input:disabled {
   color: #fff !important;
 }
 
+/* ---------- Agency add/edit modal ("edit" click mode + header button) ---------- */
+
+/* Same card as .commentModal, just a bit wider to comfortably fit a row of
+   three screen inputs side by side. */
+.agencyEditorModal {
+  width: min(480px, 100%);
+}
+
+.agencyEditorScreensHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.15rem;
+}
+
+.agencyEditorScreensHeading span {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.agencyEditorScreensHeading button {
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--surface-alt);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.agencyEditorScreensHeading button:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+/* Brand / model / quantity / remove, in one row. Quantity gets just enough
+   room for a couple of digits; brand and model share what's left. */
+.agencyEditorScreenRow {
+  display: grid;
+  grid-template-columns: 1.4fr 1.4fr 4.5rem auto;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.agencyEditorScreenRow input {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.88rem;
+}
+
+.agencyEditorScreenRow button {
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--surface-alt);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.agencyEditorScreenRow button:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Pushed to the far left of the actions row (Cancel/Enregistrer stay on the
+   right, same as .commentModal) and colored as a destructive action, unlike
+   the neutral gray the same button shape gets elsewhere. */
+.agencyEditorDelete {
+  margin-right: auto;
+  background: transparent !important;
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+}
+
+.agencyEditorDelete:hover:not(:disabled) {
+  background: var(--danger) !important;
+  color: #fff !important;
+}
+
+@media (max-width: 520px) {
+  /* Not enough width for four columns once the modal itself shrinks to fit
+     a narrow phone screen — quantity and remove drop to their own row
+     under brand/model instead of squeezing everything into one line. */
+  .agencyEditorScreenRow {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .agencyEditorScreenRow input:nth-child(3) {
+    grid-column: 1;
+  }
+
+  .agencyEditorScreenRow button {
+    grid-column: 2;
+  }
+}
+
 /* ---------- Mobile bottom sheets ---------- */
 
 /* Hidden on desktop: the drag handle / peek strip used to open & close each
@@ -1105,6 +1238,7 @@ input:disabled {
 
   input,
   .themeToggle,
+  .addAgencyButton,
   .agencyModeToggle,
   .sectionHeading button,
   .calculateButton {
@@ -1123,6 +1257,7 @@ input:disabled {
   }
 
   .headerActions .themeToggle,
+  .headerActions .addAgencyButton,
   .headerActions .agencyModeToggle {
     flex: 1 1 0;
     min-width: 0;

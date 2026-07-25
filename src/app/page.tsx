@@ -106,7 +106,7 @@ function getLegColor(legIndex: number, legCount: number): string {
 }
 
 // The order the single toggle button cycles through on each click.
-const AGENCY_CLICK_MODES: AgencyClickMode[] = ["waypoint", "visited", "comment"];
+const AGENCY_CLICK_MODES: AgencyClickMode[] = ["waypoint", "visited", "comment", "edit"];
 
 function nextAgencyClickMode(mode: AgencyClickMode): AgencyClickMode {
   const index = AGENCY_CLICK_MODES.indexOf(mode);
@@ -117,6 +117,25 @@ const AGENCY_CLICK_MODE_LABEL: Record<AgencyClickMode, string> = {
   waypoint: "📍 Ajouter comme étape",
   visited: "✅ Basculer visité",
   comment: "💬 Ajouter un commentaire",
+  edit: "✏️ Modifier une agence",
+};
+
+// One blank screen row, used to seed both a brand-new agency form and any
+// existing agency that (unusually) has no screens recorded yet — an empty
+// list with no rows at all would leave no obvious way to add the first one.
+function createBlankScreenRow(): AgencyEditorScreenRow {
+  return { brand: "", model: "", count: "1" };
+}
+
+type AgencyEditorScreenRow = { brand: string; model: string; count: string };
+
+type SavedAgencyResponse = {
+  id: string;
+  name: string;
+  address: string;
+  screens: { brand: string; model: string; count: number }[];
+  lat: number;
+  lon: number;
 };
 
 // Images live in Redis, not the repo (see app/api/easter-egg/route.ts) —
@@ -282,6 +301,19 @@ export default function Home() {
   const [commentSaving, setCommentSaving] = useState(false);
   const [commentSaveError, setCommentSaveError] = useState("");
 
+  // Which agency's add/edit form is open: an existing agency's id, "new"
+  // for the blank "add an agency" form, or null when the form is closed.
+  // The draft fields live in their own state (not derived from `agencies`)
+  // for the same reason as the comment draft above — typing shouldn't
+  // round-trip through the agencies array on every keystroke.
+  const [agencyEditorId, setAgencyEditorId] = useState<string | "new" | null>(null);
+  const [agencyEditorName, setAgencyEditorName] = useState("");
+  const [agencyEditorAddress, setAgencyEditorAddress] = useState("");
+  const [agencyEditorScreens, setAgencyEditorScreens] = useState<AgencyEditorScreenRow[]>([]);
+  const [agencyEditorSaving, setAgencyEditorSaving] = useState(false);
+  const [agencyEditorDeleting, setAgencyEditorDeleting] = useState(false);
+  const [agencyEditorError, setAgencyEditorError] = useState("");
+
   // Sync with the theme the inline layout script already applied, without
   // fighting SSR (see layout.tsx for the pre-hydration script).
   useEffect(() => {
@@ -410,6 +442,151 @@ export default function Home() {
     },
     [agencies, closeCommentEditor],
   );
+
+  // Opens the agency form: "new" for a blank agency, or an existing
+  // agency's id to edit it in place, seeded with its current name/address/
+  // screens.
+  const openAgencyEditor = useCallback(
+    (agencyId: string | "new") => {
+      if (agencyId === "new") {
+        setAgencyEditorId("new");
+        setAgencyEditorName("");
+        setAgencyEditorAddress("");
+        setAgencyEditorScreens([createBlankScreenRow()]);
+      } else {
+        const target = agencies.find((agency) => agency.id === agencyId);
+        if (!target) {
+          return;
+        }
+        setAgencyEditorId(agencyId);
+        setAgencyEditorName(target.name);
+        setAgencyEditorAddress(target.address);
+        setAgencyEditorScreens(
+          target.screens.length > 0
+            ? target.screens.map((screen) => ({
+                brand: screen.brand,
+                model: screen.model,
+                count: String(screen.count),
+              }))
+            : [createBlankScreenRow()],
+        );
+      }
+      setAgencyEditorError("");
+    },
+    [agencies],
+  );
+
+  const closeAgencyEditor = useCallback(() => {
+    setAgencyEditorId(null);
+    setAgencyEditorName("");
+    setAgencyEditorAddress("");
+    setAgencyEditorScreens([]);
+    setAgencyEditorError("");
+    setAgencyEditorSaving(false);
+    setAgencyEditorDeleting(false);
+  }, []);
+
+  const updateAgencyEditorScreen = (index: number, field: "brand" | "model" | "count", value: string) => {
+    setAgencyEditorScreens((current) =>
+      current.map((screen, screenIndex) => (screenIndex === index ? { ...screen, [field]: value } : screen)),
+    );
+  };
+
+  const addAgencyEditorScreenRow = () => {
+    setAgencyEditorScreens((current) => [...current, createBlankScreenRow()]);
+  };
+
+  const removeAgencyEditorScreenRow = (index: number) => {
+    setAgencyEditorScreens((current) => current.filter((_, screenIndex) => screenIndex !== index));
+  };
+
+  // Validates the form client-side (mirrors the checks lib/agencies-data.ts
+  // runs again server-side, so obvious mistakes are caught before the round
+  // trip) and creates or updates the agency via the API. On success, the
+  // freshly-saved record (with its geocoded lat/lon) replaces/joins
+  // `agencies` in place — visited/comment state is preserved for an edit
+  // since the API doesn't touch it.
+  const saveAgencyEditor = useCallback(async () => {
+    const name = agencyEditorName.trim();
+    const address = agencyEditorAddress.trim();
+
+    if (!name) {
+      setAgencyEditorError("Le nom de l'agence est requis.");
+      return;
+    }
+    if (!address) {
+      setAgencyEditorError("L'adresse est requise.");
+      return;
+    }
+
+    // Blank rows (never touched) are dropped silently rather than rejected
+    // — only rows with something typed in them are validated as real
+    // screens.
+    const touchedRows = agencyEditorScreens.filter(
+      (screen) => screen.brand.trim() || screen.model.trim() || screen.count.trim(),
+    );
+
+    const screens: { brand: string; model: string; count: number }[] = [];
+    for (let index = 0; index < touchedRows.length; index += 1) {
+      const row = touchedRows[index];
+      const brand = row.brand.trim();
+      const model = row.model.trim();
+      const count = Number(row.count);
+
+      if (!brand || !model) {
+        setAgencyEditorError(`Écran ${index + 1} : la marque et le modèle sont requis.`);
+        return;
+      }
+      if (!Number.isFinite(count) || !Number.isInteger(count) || count < 1) {
+        setAgencyEditorError(`Écran ${index + 1} : la quantité doit être un nombre entier positif.`);
+        return;
+      }
+
+      screens.push({ brand, model, count });
+    }
+
+    setAgencyEditorSaving(true);
+    setAgencyEditorError("");
+
+    try {
+      const isNew = agencyEditorId === "new";
+      const response = await fetch(
+        isNew ? "/api/agencies" : `/api/agencies/${encodeURIComponent(agencyEditorId as string)}`,
+        {
+          method: isNew ? "POST" : "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, address, screens }),
+        },
+      );
+
+      const data = (await response.json().catch(() => ({}))) as { agency?: SavedAgencyResponse; error?: string };
+
+      if (!response.ok || !data.agency) {
+        throw new Error(data.error || "Échec de l'enregistrement de l'agence.");
+      }
+
+      const saved = data.agency;
+
+      setAgencies((current) => {
+        if (isNew) {
+          return [...current, { ...saved, visited: false, comment: "" }];
+        }
+        return current.map((agency) =>
+          agency.id === saved.id
+            ? { ...saved, visited: agency.visited, comment: agency.comment }
+            : agency,
+        );
+      });
+
+      closeAgencyEditor();
+    } catch (saveError) {
+      setAgencyEditorError(
+        saveError instanceof Error ? saveError.message : "Échec de l'enregistrement de l'agence.",
+      );
+    } finally {
+      setAgencyEditorSaving(false);
+    }
+  }, [agencyEditorId, agencyEditorName, agencyEditorAddress, agencyEditorScreens, closeAgencyEditor]);
 
   const toggleTheme = () => {
     easterEggThemeClicksRef.current += 1;
@@ -639,6 +816,47 @@ export default function Home() {
     setTrip((current) => updater(current));
   }, []);
 
+  // Deletes the agency currently open in the form. Any stop on the current
+  // trip that was linked to it (see stopAgencyIds) just loses that link —
+  // the typed address text stays put, it simply stops counting toward the
+  // screen tally, same as manually editing that stop's text would do.
+  const deleteAgencyEditor = useCallback(async () => {
+    if (agencyEditorId === "new" || agencyEditorId === null) {
+      return;
+    }
+    const agencyId = agencyEditorId;
+
+    if (!window.confirm("Supprimer définitivement cette agence ? Cette action est irréversible.")) {
+      return;
+    }
+
+    setAgencyEditorDeleting(true);
+    setAgencyEditorError("");
+
+    try {
+      const response = await fetch(`/api/agencies/${encodeURIComponent(agencyId)}`, { method: "DELETE" });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(data.error || "Échec de la suppression de l'agence.");
+      }
+
+      setAgencies((current) => current.filter((agency) => agency.id !== agencyId));
+      updateTrip((current) => ({
+        ...current,
+        stopAgencyIds: current.stopAgencyIds.map((id) => (id === agencyId ? null : id)),
+      }));
+
+      closeAgencyEditor();
+    } catch (deleteError) {
+      setAgencyEditorError(
+        deleteError instanceof Error ? deleteError.message : "Échec de la suppression de l'agence.",
+      );
+    } finally {
+      setAgencyEditorDeleting(false);
+    }
+  }, [agencyEditorId, updateTrip, closeAgencyEditor]);
+
   // Serializes /api/geocode calls one after another (with a pause between
   // them) so clicking several agency markers in quick succession doesn't
   // fire concurrent requests at Nominatim — same courtesy buildTripPlan
@@ -762,11 +980,13 @@ export default function Home() {
         addAgencyAsEarliestWaypoint(agency);
       } else if (agencyClickMode === "visited") {
         toggleAgencyVisited(agency.id);
+      } else if (agencyClickMode === "edit") {
+        openAgencyEditor(agency.id);
       } else {
         openCommentEditor(agency.id);
       }
     },
-    [agencyClickMode, addAgencyAsEarliestWaypoint, toggleAgencyVisited, openCommentEditor],
+    [agencyClickMode, addAgencyAsEarliestWaypoint, toggleAgencyVisited, openAgencyEditor, openCommentEditor],
   );
 
   // Every fetchTrip call re-geocodes all stops from scratch and can take a
@@ -1219,6 +1439,9 @@ export default function Home() {
             <button type="button" className="themeToggle" onClick={toggleTheme}>
               {theme === "dark" ? "☀️ Mode clair" : "🌙 Mode sombre"}
             </button>
+            <button type="button" className="addAgencyButton" onClick={() => openAgencyEditor("new")}>
+              + Ajouter une agence
+            </button>
             <button
               type="button"
               className={`agencyModeToggle mode-${agencyClickMode}`}
@@ -1437,6 +1660,124 @@ export default function Home() {
                       disabled={commentSaving}
                     >
                       {commentSaving ? "Enregistrement…" : "Enregistrer"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()
+        : null}
+
+      {agencyEditorId
+        ? (() => {
+            const isNew = agencyEditorId === "new";
+            const busy = agencyEditorSaving || agencyEditorDeleting;
+
+            return (
+              <div className="commentModalBackdrop" onClick={closeAgencyEditor}>
+                <div
+                  className="commentModal agencyEditorModal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="agencyEditorModalTitle"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="commentModalHeader">
+                    <div>
+                      <h2 id="agencyEditorModalTitle">{isNew ? "Ajouter une agence" : "Modifier l'agence"}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      className="commentModalClose"
+                      aria-label="Fermer"
+                      onClick={closeAgencyEditor}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <label htmlFor="agencyEditorName">Nom de l'agence</label>
+                  <input
+                    id="agencyEditorName"
+                    value={agencyEditorName}
+                    onChange={(event) => setAgencyEditorName(event.target.value)}
+                    disabled={busy}
+                  />
+
+                  <label htmlFor="agencyEditorAddress">Adresse</label>
+                  <AddressAutocomplete
+                    id="agencyEditorAddress"
+                    value={agencyEditorAddress}
+                    onChange={setAgencyEditorAddress}
+                    placeholder="Adresse de l'agence"
+                    disabled={busy}
+                  />
+
+                  <div className="agencyEditorScreensHeading">
+                    <span>Écrans</span>
+                    <button type="button" onClick={addAgencyEditorScreenRow} disabled={busy}>
+                      + Ajouter un écran
+                    </button>
+                  </div>
+
+                  {agencyEditorScreens.map((screen, index) => (
+                    <div className="agencyEditorScreenRow" key={`agency-editor-screen-${index}`}>
+                      <input
+                        aria-label={`Marque de l'écran ${index + 1}`}
+                        placeholder="Marque (ex : IIYAMA)"
+                        value={screen.brand}
+                        onChange={(event) => updateAgencyEditorScreen(index, "brand", event.target.value)}
+                        disabled={busy}
+                      />
+                      <input
+                        aria-label={`Modèle de l'écran ${index + 1}`}
+                        placeholder="Modèle"
+                        value={screen.model}
+                        onChange={(event) => updateAgencyEditorScreen(index, "model", event.target.value)}
+                        disabled={busy}
+                      />
+                      <input
+                        aria-label={`Quantité de l'écran ${index + 1}`}
+                        placeholder="Qté"
+                        type="number"
+                        min={1}
+                        value={screen.count}
+                        onChange={(event) => updateAgencyEditorScreen(index, "count", event.target.value)}
+                        disabled={busy}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeAgencyEditorScreenRow(index)}
+                        disabled={busy}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  ))}
+
+                  {agencyEditorError ? <p className="error">{agencyEditorError}</p> : null}
+
+                  <div className="commentModalActions">
+                    {!isNew ? (
+                      <button
+                        type="button"
+                        className="agencyEditorDelete"
+                        onClick={() => void deleteAgencyEditor()}
+                        disabled={busy}
+                      >
+                        {agencyEditorDeleting ? "Suppression…" : "Supprimer l'agence"}
+                      </button>
+                    ) : null}
+                    <button type="button" onClick={closeAgencyEditor} disabled={busy}>
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      className="commentModalSave"
+                      onClick={() => void saveAgencyEditor()}
+                      disabled={busy}
+                    >
+                      {agencyEditorSaving ? "Enregistrement…" : "Enregistrer"}
                     </button>
                   </div>
                 </div>

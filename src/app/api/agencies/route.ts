@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { getGeocodedAgencies } from "@/lib/agencies-data";
+import { createAgency, getGeocodedAgencies, parseAgencyInput, parseOptionalCoordinate } from "@/lib/agencies-data";
+import { geocodeAddress, safeErrorMessage, safeErrorStatus } from "@/lib/trip-planner";
 import { getAgencyComments, getVisitedAgencyIds } from "@/lib/visited-agencies";
 
 export async function GET() {
@@ -31,4 +32,32 @@ export async function GET() {
   }));
 
   return NextResponse.json({ agencies }, { status: 200 });
+}
+
+// Creates a brand-new agency. The address is geocoded server-side (same
+// Nominatim call the trip planner itself uses) unless the caller already
+// supplies a manual lat/lon override, so every agency in Redis always ends
+// up with a usable map marker.
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Corps de requête JSON invalide." }, { status: 400 });
+  }
+
+  try {
+    const input = parseAgencyInput(body);
+    const manualCoordinate = parseOptionalCoordinate(body);
+    const coordinate = manualCoordinate ?? (await geocodeAddress(input.address)).coordinate;
+
+    const agency = await createAgency(input, coordinate);
+    return NextResponse.json({ agency }, { status: 201 });
+  } catch (error) {
+    console.error("[POST /api/agencies] failed to create agency:", error);
+    return NextResponse.json(
+      { error: safeErrorMessage(error, "Impossible de créer l'agence.") },
+      { status: safeErrorStatus(error) },
+    );
+  }
 }

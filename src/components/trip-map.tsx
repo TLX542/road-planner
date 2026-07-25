@@ -39,7 +39,7 @@ export type AgencyMarker = {
   comment?: string;
 };
 
-export type AgencyClickMode = "visited" | "waypoint" | "comment";
+export type AgencyClickMode = "visited" | "waypoint" | "comment" | "edit";
 
 type TripMapProps = {
   routes: MapRoute[];
@@ -159,7 +159,9 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
         ? agency.comment?.trim()
           ? "Cliquez sur le marqueur pour modifier le commentaire"
           : "Cliquez sur le marqueur pour ajouter un commentaire"
-        : "Cliquez sur le marqueur pour basculer visité";
+        : mode === "edit"
+          ? "Cliquez sur le marqueur pour modifier cette agence"
+          : "Cliquez sur le marqueur pour basculer visité";
 
   const totalNew =
     totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens)) +
