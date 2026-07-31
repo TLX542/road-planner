@@ -13,19 +13,21 @@ const redis = Redis.fromEnv();
 const KEYS = {
   marc: "easter-egg:marc",
   nicolas: "easter-egg:nicolas",
+  tao: "easter-egg:tao",
 } as const;
 
 export async function GET() {
-  const [marc, nicolas] = await Promise.all([
+  const [marc, nicolas, tao] = await Promise.all([
     redis.get<string>(KEYS.marc),
     redis.get<string>(KEYS.nicolas),
+    redis.get<string>(KEYS.tao),
   ]);
 
-  if (!marc || !nicolas) {
+  if (!marc || !nicolas || !tao) {
     return NextResponse.json({ error: "not seeded" }, { status: 404 });
   }
 
-  return NextResponse.json({ marc, nicolas });
+  return NextResponse.json({ marc, nicolas, tao });
 }
 
 // One-time (or re-run whenever) seeding endpoint — run scripts/seed-easter-egg.mjs
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "EASTER_EGG_SEED_SECRET not configured" }, { status: 500 });
   }
 
-  let body: { secret?: string; marc?: string; nicolas?: string };
+  let body: { secret?: string; marc?: string; nicolas?: string; tao?: string};
   try {
     body = await request.json();
   } catch {
@@ -48,14 +50,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  if (typeof body.marc !== "string" || typeof body.nicolas !== "string") {
+  if (typeof body.marc !== "string" || typeof body.nicolas !== "string" || typeof body.tao !== "string") {
     return NextResponse.json(
-      { error: "marc and nicolas (base64 data URLs) are required" },
+      { error: "marc, nicolas or tao (base64 data URLs) are required" },
       { status: 400 },
     );
   }
 
-  await Promise.all([redis.set(KEYS.marc, body.marc), redis.set(KEYS.nicolas, body.nicolas)]);
+  await Promise.all([redis.set(KEYS.marc, body.marc), redis.set(KEYS.nicolas, body.nicolas), redis.set(KEYS.tao, body.tao)]);
 
   return NextResponse.json({ ok: true });
 }

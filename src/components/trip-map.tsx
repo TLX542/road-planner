@@ -39,7 +39,7 @@ export type AgencyMarker = {
   comment?: string;
 };
 
-export type AgencyClickMode = "visited" | "waypoint" | "comment" | "edit";
+export type AgencyClickMode = "visited" | "waypoint" | "comment";
 
 type TripMapProps = {
   routes: MapRoute[];
@@ -62,7 +62,7 @@ type TripMapProps = {
   // been triggered and the photos have been fetched from Redis), every
   // non-HQ agency marker renders as one of these two photos instead of a
   // plain dot — still tinted per status so the map reads the same way.
-  easterEggImages?: { marc: string; nicolas: string } | null;
+  easterEggImages?: { marc: string; nicolas: string; tao: string } | null;
 };
 
 // Épinal is the head office, not just another agency — it gets its own
@@ -159,9 +159,7 @@ function buildAgencyTooltipHtml(agency: AgencyMarker, mode: AgencyClickMode, isS
         ? agency.comment?.trim()
           ? "Cliquez sur le marqueur pour modifier le commentaire"
           : "Cliquez sur le marqueur pour ajouter un commentaire"
-        : mode === "edit"
-          ? "Cliquez sur le marqueur pour modifier cette agence"
-          : "Cliquez sur le marqueur pour basculer visité";
+        : "Cliquez sur le marqueur pour basculer visité";
 
   const totalNew =
     totalNewScreensNeeded(withoutKnownStock(agency.name, agency.screens)) +
@@ -233,11 +231,12 @@ export function TripMap({
   // depend on it (and therefore doesn't need to redraw markers just because
   // the parent re-created the callback).
   const onAgencyClickRef = useRef(onAgencyClick);
-  // Genuine per-agency coin flip (marc vs. nicolas), rolled once the first
-  // time that agency is drawn with the egg on and cached here so it stays
-  // put across re-renders instead of re-rolling (or worse, correlating with
-  // however agency ids happen to be generated) every redraw.
-  const easterEggAssignmentsRef = useRef<Map<string, "marc" | "nicolas">>(new Map());
+  // Genuine per-agency three-way roll (marc vs. nicolas vs. tao), rolled
+  // once the first time that agency is drawn with the egg on and cached
+  // here so it stays put across re-renders instead of re-rolling (or worse,
+  // correlating with however agency ids happen to be generated) every
+  // redraw.
+  const easterEggAssignmentsRef = useRef<Map<string, "marc" | "nicolas" | "tao">>(new Map());
   // Counts clicks on the headquarters (Épinal) marker specifically. Lives
   // outside the marker-render effect (which reruns and rebuilds every
   // marker whenever agencyMarkers/agencyClickMode/selectedAgencyIds
@@ -389,7 +388,8 @@ export function TripMap({
 
           let assignment = easterEggAssignmentsRef.current.get(agency.id);
           if (!assignment) {
-            assignment = Math.random() < 0.5 ? "marc" : "nicolas";
+            const roll = Math.random();
+            assignment = roll < 1 / 3 ? "marc" : roll < 2 / 3 ? "nicolas" : "tao";
             easterEggAssignmentsRef.current.set(agency.id, assignment);
           }
           const src = easterEggImages[assignment];

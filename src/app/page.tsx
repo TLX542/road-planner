@@ -140,7 +140,7 @@ type SavedAgencyResponse = {
 
 // Images live in Redis, not the repo (see app/api/easter-egg/route.ts) —
 // fetched only once someone actually finds the hidden trigger below.
-type EasterEggImages = { marc: string; nicolas: string };
+type EasterEggImages = { marc: string; nicolas: string; tao: string};
 
 export default function Home() {
   const [trip, setTrip] = useState<TripState>(() => createTrip());

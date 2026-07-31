@@ -3,7 +3,7 @@
 // Usage:
 //   EASTER_EGG_SEED_SECRET=your-secret \
 //   EASTER_EGG_BASE_URL=https://your-app.vercel.app \
-//   node scripts/seed-easter-egg.mjs /path/to/marc.png /path/to/nicolas.png
+//   node scripts/seed-easter-egg.mjs /path/to/marc.png /path/to/nicolas.png /path/to/tao.png
 //
 // - EASTER_EGG_SEED_SECRET must match the env var set on your deployment.
 // - The images are only read from your local disk and POSTed straight to
@@ -14,12 +14,12 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-const [marcPath, nicolasPath] = process.argv.slice(2);
+const [marcPath, nicolasPath, taoPath] = process.argv.slice(2);
 const secret = process.env.EASTER_EGG_SEED_SECRET;
 const baseUrl = process.env.EASTER_EGG_BASE_URL ?? "http://localhost:3000";
 
-if (!marcPath || !nicolasPath) {
-  console.error("Usage: node scripts/seed-easter-egg.mjs <marc.png> <nicolas.png>");
+if (!marcPath || !nicolasPath || !taoPath) {
+  console.error("Usage: node scripts/seed-easter-egg.mjs <marc.png> <nicolas.png> <tao.png>");
   process.exit(1);
 }
 
@@ -40,12 +40,12 @@ async function toDataUrl(filePath) {
   return `data:${guessMime(filePath)};base64,${buffer.toString("base64")}`;
 }
 
-const [marc, nicolas] = await Promise.all([toDataUrl(marcPath), toDataUrl(nicolasPath)]);
+const [marc, nicolas, tao] = await Promise.all([toDataUrl(marcPath), toDataUrl(nicolasPath), toDataUrl(taoPath)]);
 
 const response = await fetch(`${baseUrl}/api/easter-egg`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ secret, marc, nicolas }),
+  body: JSON.stringify({ secret, marc, nicolas, tao }),
 });
 
 if (!response.ok) {
