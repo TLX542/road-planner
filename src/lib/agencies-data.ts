@@ -25,6 +25,7 @@ type CoordinateMap = Record<string, { lat: number; lon: number }>;
 
 const AGENCIES_SOURCE_KEY = "agencies:source";
 const AGENCY_COORDINATES_KEY = "agencies:coordinates";
+const HQ_STOCK_KEY = "agencies:hq-stock";
 
 // Same client/env-var convention as lib/visited-agencies.ts.
 const redis = Redis.fromEnv();
@@ -35,6 +36,14 @@ const redis = Redis.fromEnv();
 // in module scope instead of round-tripping to Redis each time.
 let cachedAgencies: AgencyRecord[] | null = null;
 let cachedCoordinates: CoordinateMap | null = null;
+
+// The screen models currently sitting in stock at HQ, waiting to be
+// brought out to whichever agency needs them next — see the HQ stock
+// section below. `cachedHqStock` alone can't distinguish "not loaded yet"
+// from "loaded, and there's genuinely nothing in stock" (both would be an
+// empty array), hence the separate `hqStockLoaded` flag.
+let cachedHqStock: HqStockScreen[] | null = null;
+let hqStockLoaded = false;
 
 async function loadAgencies(): Promise<AgencyRecord[]> {
   if (cachedAgencies) return cachedAgencies;
@@ -61,6 +70,113 @@ async function loadCoordinates(): Promise<CoordinateMap> {
 
 export async function getAgencies(): Promise<AgencyRecord[]> {
   return loadAgencies();
+}
+
+// ---------------------------------------------------------------------
+// HQ stock
+// ---------------------------------------------------------------------
+//
+// Screens that have been recovered from an agency and are currently
+// sitting in stock at HQ (Épinal), waiting to be brought out to whichever
+// agency needs them next — used exactly like brand-new screens once
+// they're carried along on a trip. Unlike KNOWN_UNUSED_STOCK in
+// lib/screen-math.ts (which tracks spares already sitting at a specific
+// *agency*), this is the stock at HQ itself: any number of different
+// models can be in stock at once, but at most one unit of any given
+// (brand, model) — so each entry is just the (brand, model), no count.
+
+export type HqStockScreen = {
+  brand: string;
+  model: string;
+};
+
+function sameHqStockModel(a: HqStockScreen, b: { brand: string; model: string }): boolean {
+  return a.brand.toLowerCase() === b.brand.toLowerCase() && a.model.toLowerCase() === b.model.toLowerCase();
+}
+
+async function loadHqStock(): Promise<HqStockScreen[]> {
+  if (hqStockLoaded) return cachedHqStock as HqStockScreen[];
+
+  // Back-compat: earlier versions stored a single object (or nothing) at
+  // this key instead of an array. Normalize whatever shape comes back
+  // from Redis into a list.
+  const data = await redis.get<HqStockScreen[] | HqStockScreen>(HQ_STOCK_KEY);
+  const screens = !data ? [] : Array.isArray(data) ? data : [data];
+
+  cachedHqStock = screens;
+  hqStockLoaded = true;
+  return screens;
+}
+
+async function persistHqStock(screens: HqStockScreen[]): Promise<void> {
+  if (screens.length > 0) {
+    await redis.set(HQ_STOCK_KEY, screens);
+  } else {
+    await redis.del(HQ_STOCK_KEY);
+  }
+  cachedHqStock = screens;
+  hqStockLoaded = true;
+}
+
+/** The screen models currently in stock at HQ (possibly empty). */
+export async function getHqStockScreens(): Promise<HqStockScreen[]> {
+  return loadHqStock();
+}
+
+/**
+ * Adds a screen model to HQ stock. Throws HttpError(409, ...) if that
+ * (brand, model) is already recorded in stock — there can only be one of
+ * each model at a time, but any number of distinct models.
+ */
+export async function addHqStockScreen(screen: HqStockScreen): Promise<HqStockScreen[]> {
+  const screens = await loadHqStock();
+
+  if (screens.some((existing) => sameHqStockModel(existing, screen))) {
+    throw new HttpError(409, `"${screen.brand} ${screen.model}" est déjà en stock au siège.`);
+  }
+
+  const updated = [...screens, screen];
+  await persistHqStock(updated);
+  return updated;
+}
+
+/**
+ * Removes a single screen model from HQ stock — e.g. once it's actually
+ * been taken along on a trip. Throws HttpError(404, ...) if that
+ * (brand, model) isn't currently in stock.
+ */
+export async function removeHqStockScreen(brand: string, model: string): Promise<HqStockScreen[]> {
+  const screens = await loadHqStock();
+  const updated = screens.filter((existing) => !sameHqStockModel(existing, { brand, model }));
+
+  if (updated.length === screens.length) {
+    throw new HttpError(404, `"${brand} ${model}" n'est pas en stock au siège.`);
+  }
+
+  await persistHqStock(updated);
+  return updated;
+}
+
+/**
+ * Validates and normalizes the JSON body of an add/remove-HQ-stock
+ * request. Throws HttpError(400, ...) with a specific, user-facing
+ * message on the first problem found, mirroring parseAgencyInput above.
+ */
+export function parseHqStockInput(body: unknown): HqStockScreen {
+  if (typeof body !== "object" || body === null) {
+    throw new HttpError(400, "Request body must be a JSON object.");
+  }
+
+  const { brand, model } = body as Record<string, unknown>;
+
+  if (typeof brand !== "string" || brand.trim().length === 0) {
+    throw new HttpError(400, "brand is required.");
+  }
+  if (typeof model !== "string" || model.trim().length === 0) {
+    throw new HttpError(400, "model is required.");
+  }
+
+  return { brand: brand.trim(), model: model.trim() };
 }
 
 export async function getGeocodedAgencies(): Promise<GeocodedAgency[]> {

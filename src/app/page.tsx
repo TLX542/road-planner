@@ -6,12 +6,14 @@ import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { TripMap, type AgencyClickMode, type AgencyMarker } from "@/components/trip-map";
 import {
   newScreensNeededForCount,
-  combinedLeftoverForModel,
+  combinedLeftoverForModelWithHqStock,
   totalNewScreensNeeded,
   splitInstalledAndStockCount,
   withoutKnownStock,
   newScreensNeededForHs,
   totalNewScreensNeededForHs,
+  usefulHqStockScreens,
+  totalNewScreensSavingsFromHqStock,
 } from "@/lib/screen-math";
 
 type TripLeg = {
@@ -314,6 +316,23 @@ export default function Home() {
   const [agencyEditorDeleting, setAgencyEditorDeleting] = useState(false);
   const [agencyEditorError, setAgencyEditorError] = useState("");
 
+  // The screen models currently in stock at HQ, waiting to be brought out
+  // to whichever agency needs them next — see lib/agencies-data.ts. Any
+  // number of distinct models can be in stock at once (e.g. a B5 and a
+  // B6 together), but at most one of any given model. `undefined` means
+  // "not fetched yet" (so the tally line below can stay hidden until we
+  // actually know); an empty array means "fetched, and there's genuinely
+  // nothing in stock".
+  const [hqStockScreens, setHqStockScreens] = useState<{ brand: string; model: string }[] | undefined>(undefined);
+  const [hqStockEditorOpen, setHqStockEditorOpen] = useState(false);
+  const [hqStockBrandDraft, setHqStockBrandDraft] = useState("");
+  const [hqStockModelDraft, setHqStockModelDraft] = useState("");
+  const [hqStockSaving, setHqStockSaving] = useState(false);
+  // Tracks which entry (as a "brand|model" key) is mid-removal, so only
+  // that row's button shows a busy state rather than the whole modal.
+  const [hqStockRemovingKey, setHqStockRemovingKey] = useState<string | null>(null);
+  const [hqStockError, setHqStockError] = useState("");
+
   // Sync with the theme the inline layout script already applied, without
   // fighting SSR (see layout.tsx for the pre-hydration script).
   useEffect(() => {
@@ -349,6 +368,134 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // HQ stock (the spare screens, if any, currently sitting at Épinal —
+  // see lib/agencies-data.ts) is likewise static-ish reference data, so
+  // it's fetched once on mount alongside the agency list.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHqStock() {
+      try {
+        const response = await fetch("/api/hq-stock");
+        if (!response.ok) {
+          if (!cancelled) {
+            setHqStockScreens([]);
+          }
+          return;
+        }
+
+        const data = (await response.json()) as { screens?: { brand: string; model: string }[] };
+        if (!cancelled) {
+          setHqStockScreens(Array.isArray(data.screens) ? data.screens : []);
+        }
+      } catch {
+        // Non-critical: the planner still works without the HQ stock line.
+        if (!cancelled) {
+          setHqStockScreens([]);
+        }
+      }
+    }
+
+    void loadHqStock();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Opens the HQ stock editor. The modal shows the current list plus a
+  // blank add-form — it isn't seeded from an existing entry, since a
+  // model in stock is added/removed rather than edited in place.
+  const openHqStockEditor = useCallback(() => {
+    setHqStockBrandDraft("");
+    setHqStockModelDraft("");
+    setHqStockError("");
+    setHqStockEditorOpen(true);
+  }, []);
+
+  const closeHqStockEditor = useCallback(() => {
+    setHqStockEditorOpen(false);
+    setHqStockBrandDraft("");
+    setHqStockModelDraft("");
+    setHqStockError("");
+    setHqStockSaving(false);
+    setHqStockRemovingKey(null);
+  }, []);
+
+  // Adds a screen model to HQ stock. Leaves the modal open (clearing just
+  // the form) so several models can be added back-to-back, e.g. a B5 then
+  // a B6.
+  const addHqStockEntry = useCallback(async () => {
+    const brand = hqStockBrandDraft.trim();
+    const model = hqStockModelDraft.trim();
+
+    if (!brand || !model) {
+      setHqStockError("La marque et le modèle sont requis.");
+      return;
+    }
+
+    setHqStockSaving(true);
+    setHqStockError("");
+
+    try {
+      const response = await fetch("/api/hq-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand, model }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        screens?: { brand: string; model: string }[];
+        error?: string;
+      };
+
+      if (!response.ok || !data.screens) {
+        throw new Error(data.error || "Échec de l'ajout de l'écran en stock.");
+      }
+
+      setHqStockScreens(data.screens);
+      setHqStockBrandDraft("");
+      setHqStockModelDraft("");
+      setHqStockSaving(false);
+    } catch (saveError) {
+      setHqStockError(saveError instanceof Error ? saveError.message : "Échec de l'ajout de l'écran en stock.");
+      setHqStockSaving(false);
+    }
+  }, [hqStockBrandDraft, hqStockModelDraft]);
+
+  // Removes a single screen model from HQ stock — e.g. once it's actually
+  // been taken along on a trip. The rest of the stock is left untouched.
+  const removeHqStockEntry = useCallback(async (brand: string, model: string) => {
+    const key = `${brand}|${model}`;
+    setHqStockRemovingKey(key);
+    setHqStockError("");
+
+    try {
+      const response = await fetch("/api/hq-stock", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand, model }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        screens?: { brand: string; model: string }[];
+        error?: string;
+      };
+
+      if (!response.ok || !data.screens) {
+        throw new Error(data.error || "Échec de la suppression de l'écran en stock.");
+      }
+
+      setHqStockScreens(data.screens);
+    } catch (removeError) {
+      setHqStockError(
+        removeError instanceof Error ? removeError.message : "Échec de la suppression de l'écran en stock.",
+      );
+    } finally {
+      setHqStockRemovingKey(null);
+    }
   }, []);
 
   // Flips an agency's visited flag immediately (optimistic update) and
@@ -715,15 +862,37 @@ export default function Home() {
     );
   }, [selectedAgencyIds, agencies]);
 
+  // Out of everything currently sitting in HQ stock, only the models that
+  // can actually complete a pair with a stranded leftover on this trip —
+  // see hqStockCanPairWithTripLeftover in lib/screen-math.ts. A model
+  // that isn't needed here at all, or whose trip-wide count is already
+  // even (every old unit already has a partner), wouldn't gain anything
+  // from being brought along, so it's left out of both the savings below
+  // and the "to bring" line in the tally.
+  const usefulHqStock = useMemo(
+    () => usefulHqStockScreens(screenTally, hqStockScreens ?? []),
+    [screenTally, hqStockScreens],
+  );
+
+  // New-screens saved by bringing each useful HQ stock spare along: it
+  // completes an old-old pair with the trip's stranded leftover of that
+  // model instead of that leftover needing its own brand-new pair.
+  const hqStockNewScreensSavings = useMemo(
+    () => totalNewScreensSavingsFromHqStock(screenTally, hqStockScreens ?? []),
+    [screenTally, hqStockScreens],
+  );
+
   // How many brand-new screens the trip's agencies will need in total, so
   // each old screen (and any duplicate it already has) ends up paired with
   // a matching new one, PLUS a matching new pair for every flagged HS unit
-  // (see lib/screen-math.ts for both rules).
+  // (see lib/screen-math.ts for both rules), MINUS whatever's saved by
+  // pairing a stranded leftover with a matching HQ stock spare instead.
   const totalNewScreens = useMemo(
     () =>
       totalNewScreensNeeded(screenTally) +
-      screenTally.reduce((sum, item) => sum + newScreensNeededForHs(item.hsNeedingReplacementCount), 0),
-    [screenTally],
+      screenTally.reduce((sum, item) => sum + newScreensNeededForHs(item.hsNeedingReplacementCount), 0) -
+      hqStockNewScreensSavings,
+    [screenTally, hqStockNewScreensSavings],
   );
 
   // Same new-screens math, but broken down per agency instead of pooled
@@ -767,13 +936,16 @@ export default function Home() {
 
   // Models where, after letting a stranded installed leftover pair up with
   // any known unused stock of the same (brand, model) — see
-  // combinedLeftoverForModel — there's still an odd one out (IIYAMA) or any
-  // non-IIYAMA old unit left (never pairs). These are units to physically
-  // retrieve that don't factor into the new-screens totals above. Stock
-  // that does find a leftover to pair with (or another stock unit of the
-  // same model) is no longer "surplus with nowhere to go," so it drops out
-  // of this list even though it — and its new pair-mate — still need to be
-  // physically picked up.
+  // combinedLeftoverForModelWithHqStock — there's still an odd one out
+  // (IIYAMA) or any non-IIYAMA old unit left (never pairs). These are
+  // units to physically retrieve that don't factor into the new-screens
+  // totals above. Stock that does find a leftover to pair with (agency
+  // stock, another stock unit of the same model, or a matching HQ stock
+  // spare — see lib/screen-math.ts) is no longer "surplus with nowhere to
+  // go," so it drops out of this list even though it — and its
+  // pair-mate — still need to be physically picked up (or, for an HQ
+  // stock pairing, simply left in place to be joined by the incoming
+  // spare).
   //
   // Known HS/broken units (hsCount) are added on top, unconditionally —
   // they never take part in the pairing math above (a broken screen can't
@@ -784,10 +956,16 @@ export default function Home() {
       screenTally
         .map((item) => ({
           ...item,
-          leftover: combinedLeftoverForModel(item.count, item.stockCount, item.brand),
+          leftover: combinedLeftoverForModelWithHqStock(
+            item.count,
+            item.stockCount,
+            item.brand,
+            item.model,
+            hqStockScreens ?? [],
+          ),
         }))
         .filter((item) => item.leftover > 0 || item.hsCount > 0),
-    [screenTally],
+    [screenTally, hqStockScreens],
   );
 
   // Freeform notes left on agencies via the comment popup (see
@@ -1349,6 +1527,33 @@ export default function Home() {
               </p>
 
             ) : null}
+            {hqStockScreens !== undefined ? (
+              <p className="hqStockRow">
+                <span className="hqStockText">
+                  {usefulHqStock.length > 0 ? (
+                    <>
+                      Écran{usefulHqStock.length > 1 ? "s" : ""} en stock au siège à apporter (complète
+                      {usefulHqStock.length > 1 ? "nt" : ""} une paire sur ce trajet) :{" "}
+                      {usefulHqStock.map((screen, index) => (
+                        <span key={`${screen.brand}-${screen.model}`}>
+                          <strong>
+                            {screen.brand} {screen.model}
+                          </strong>
+                          {index < usefulHqStock.length - 1 ? ", " : ""}
+                        </span>
+                      ))}
+                      {" — "}
+                      <strong>{hqStockNewScreensSavings}</strong> écran{hqStockNewScreensSavings > 1 ? "s" : ""} neuf
+                      {hqStockNewScreensSavings > 1 ? "s" : ""} économisé{hqStockNewScreensSavings > 1 ? "s" : ""}.
+                    </>
+                  ) : hqStockScreens.length > 0 ? (
+                    "Des écrans sont en stock au siège, mais aucun ne complète de paire sur ce trajet pour le moment."
+                  ) : (
+                    "Aucun écran en stock au siège pour le moment."
+                  )}
+                </span>
+              </p>
+            ) : null}
             {agencyCommentsTally.length > 0 ? (
               <>
                 <h3>Informations complémentaires</h3>
@@ -1441,6 +1646,12 @@ export default function Home() {
             </button>
             <button type="button" className="addAgencyButton" onClick={() => openAgencyEditor("new")}>
               + Ajouter une agence
+            </button>
+            <button type="button" className="addAgencyButton" onClick={openHqStockEditor}>
+              📦{" "}
+              {hqStockScreens && hqStockScreens.length > 0
+                ? `Stock (${hqStockScreens.length})`
+                : "Ajouter en stock"}
             </button>
             <button
               type="button"
@@ -1785,6 +1996,98 @@ export default function Home() {
             );
           })()
         : null}
+
+      {hqStockEditorOpen ? (
+        <div className="commentModalBackdrop" onClick={closeHqStockEditor}>
+          <div
+            className="commentModal hqStockModal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hqStockModalTitle"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="commentModalHeader">
+              <div>
+                <h2 id="hqStockModalTitle">Écrans en stock au siège</h2>
+                <p className="commentModalAddress">
+                  Plusieurs modèles différents peuvent être en stock en même temps (par ex. un B5 et un B6), mais
+                  au plus un exemplaire de chaque modèle.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="commentModalClose"
+                aria-label="Fermer"
+                onClick={closeHqStockEditor}
+              >
+                ✕
+              </button>
+            </div>
+
+            {hqStockScreens && hqStockScreens.length > 0 ? (
+              <ul className="hqStockList">
+                {hqStockScreens.map((screen) => {
+                  const key = `${screen.brand}|${screen.model}`;
+                  const removing = hqStockRemovingKey === key;
+                  return (
+                    <li key={key} className="hqStockListItem">
+                      <span>
+                        {screen.brand} {screen.model}
+                      </span>
+                      <button
+                        type="button"
+                        className="hqStockListRemove"
+                        onClick={() => void removeHqStockEntry(screen.brand, screen.model)}
+                        disabled={removing || hqStockRemovingKey !== null}
+                        aria-label={`Retirer ${screen.brand} ${screen.model} du stock`}
+                      >
+                        {removing ? "Suppression…" : "Retirer"}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="hqStockEmpty">Aucun écran en stock au siège pour le moment.</p>
+            )}
+
+            <label htmlFor="hqStockBrand">Marque</label>
+            <input
+              id="hqStockBrand"
+              placeholder="Marque (ex : IIYAMA)"
+              value={hqStockBrandDraft}
+              onChange={(event) => setHqStockBrandDraft(event.target.value)}
+              disabled={hqStockSaving}
+              autoFocus
+            />
+
+            <label htmlFor="hqStockModel">Modèle</label>
+            <input
+              id="hqStockModel"
+              placeholder="Modèle"
+              value={hqStockModelDraft}
+              onChange={(event) => setHqStockModelDraft(event.target.value)}
+              disabled={hqStockSaving}
+            />
+
+            {hqStockError ? <p className="error">{hqStockError}</p> : null}
+
+            <div className="commentModalActions">
+              <button type="button" onClick={closeHqStockEditor} disabled={hqStockSaving}>
+                Fermer
+              </button>
+              <button
+                type="button"
+                className="commentModalSave"
+                onClick={() => void addHqStockEntry()}
+                disabled={hqStockSaving}
+              >
+                {hqStockSaving ? "Ajout…" : "Ajouter au stock"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

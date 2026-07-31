@@ -213,14 +213,14 @@ body {
   color: var(--primary);
 }
 
-/* Groups the theme toggle with the agency-click-mode toggle so they read as
-   one set of header controls. Stacked vertically (agency mode under theme)
-   on desktop; switched to a side-by-side row on mobile — see the
-   max-width: 760px block below. */
+/* Groups the theme toggle with the two "add" buttons and the
+   agency-click-mode toggle into one 2x2 grid of controls, on both desktop
+   and mobile — see the max-width: 760px block below for the mobile width
+   tweak. */
 .headerActions {
   flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   align-items: stretch;
   width: 50%;
   gap: 0.4rem;
@@ -232,9 +232,13 @@ body {
   width: 100%;
   box-sizing: border-box;
   justify-content: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  gap: 0.25rem;
 }
 
 /* ---------- Form ---------- */
@@ -1087,6 +1091,107 @@ input:disabled {
   }
 }
 
+/* ---------- HQ stock line (screen tally) + edit modal ---------- */
+
+/* The "screen currently in stock at HQ" line under the "sans
+   mutualisation" total. Text and edit button share the row, wrapping onto
+   their own lines instead of overflowing if the brand/model text is long. */
+.hqStockRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hqStockText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* A small labeled button (not just a bare icon like .infoButton) since
+   this one performs an action — open the editor — rather than revealing
+   an info popover. */
+.hqStockEditButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hqStockEditButton:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Same card as .commentModal — only two stacked fields (brand/model), so
+   unlike .agencyEditorModal it doesn't need any extra width. Kept as a
+   named hook in case that changes later. */
+.hqStockModal {
+  width: min(420px, 100%);
+}
+
+/* The list of models currently in stock, shown above the add-form inside
+   the modal. */
+.hqStockList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  list-style: none;
+}
+
+.hqStockListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.hqStockListRemove {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hqStockListRemove:hover:not(:disabled) {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.hqStockListRemove:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.hqStockEmpty {
+  margin: 0 0 0.9rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 /* ---------- Mobile bottom sheets ---------- */
 
 /* Hidden on desktop: the drag handle / peek strip used to open & close each
@@ -1251,15 +1356,12 @@ input:disabled {
   }
 
   .headerActions {
-    flex-direction: row;
-    align-items: stretch;
     width: 100%;
   }
 
   .headerActions .themeToggle,
   .headerActions .addAgencyButton,
   .headerActions .agencyModeToggle {
-    flex: 1 1 0;
     min-width: 0;
     justify-content: center;
   }

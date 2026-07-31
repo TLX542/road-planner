@@ -271,3 +271,119 @@ export function withoutKnownStock<T extends { brand: string; model: string; coun
     count: splitInstalledAndStockCount(agencyName, screen).installedCount,
   }));
 }
+
+// ---------------------------------------------------------------------
+// HQ stock (screens sitting at HQ, ready to bring on the trip)
+// ---------------------------------------------------------------------
+//
+// Separate from KNOWN_UNUSED_STOCK above (which is tied to one specific
+// agency) — HQ stock (see lib/agencies-data.ts) is a small pool of
+// recovered screens sitting at HQ with no fixed home, available to bring
+// along to *any* agency on the trip. There's at most one unit of any
+// given (brand, model) in HQ stock at a time.
+//
+// A trip-wide pooled installed count (see screenTally in page.tsx) that's
+// ODD means one old unit has no old partner anywhere on this trip, and —
+// per the newScreensNeededForCount rule above — normally needs a full
+// brand-new matching pair (2 new screens) all to itself. If HQ stock has
+// a spare of that same model, it can be carried out and paired directly
+// with that stranded old unit instead: two identical OLD screens once
+// again form a complete post, exactly like any other old pair, so
+// nothing new needs to be bought for it at all.
+//
+// This only helps when there's actually a stranded leftover to pair with
+// (odd trip-wide count) and only for redeployable brands (IIYAMA) — same
+// restriction as ordinary old-old pairing, since a non-IIYAMA unit never
+// pairs with anything regardless of what else is available.
+
+/**
+ * Whether a spare screen of this model currently sitting in HQ stock
+ * could actually be used to complete a pair with a stranded installed
+ * leftover on this trip (see the section comment above).
+ */
+export function hqStockCanPairWithTripLeftover(installedCount: number, brand: string): boolean {
+  if (!Number.isFinite(installedCount) || installedCount <= 0) {
+    return false;
+  }
+  if (!isRedeployableBrand(brand)) {
+    return false;
+  }
+  return installedCount % 2 === 1;
+}
+
+/**
+ * New-screens savings from bringing a matching HQ stock spare along: it
+ * turns what would have been a brand-new replacement pair (2 screens) for
+ * the trip's stranded leftover into an all-old pair using hardware
+ * already on hand. 0 when there's no leftover for it to usefully pair
+ * with (see hqStockCanPairWithTripLeftover).
+ */
+export function hqStockNewScreensSavings(installedCount: number, brand: string): number {
+  return hqStockCanPairWithTripLeftover(installedCount, brand) ? 2 : 0;
+}
+
+/**
+ * Out of everything currently sitting in HQ stock, the subset that's
+ * actually worth bringing on this trip — i.e. that matches a (brand,
+ * model) with a stranded leftover somewhere in `screenTally` (the
+ * trip-wide pooled tally, see page.tsx). A stock screen whose model isn't
+ * needed, or whose model's trip-wide count is already even, wouldn't find
+ * anything to pair with, so it's left out.
+ */
+export function usefulHqStockScreens<T extends { brand: string; model: string }>(
+  screenTally: { brand: string; model: string; count: number }[],
+  hqStockScreens: T[],
+): T[] {
+  return hqStockScreens.filter((stockScreen) => {
+    const match = screenTally.find(
+      (item) =>
+        normalizeForMatch(item.brand) === normalizeForMatch(stockScreen.brand) &&
+        normalizeForMatch(item.model) === normalizeForMatch(stockScreen.model),
+    );
+    return match !== undefined && hqStockCanPairWithTripLeftover(match.count, match.brand);
+  });
+}
+
+/**
+ * Total new-screens savings (see hqStockNewScreensSavings) across every
+ * model currently in HQ stock, against the trip-wide pooled tally.
+ * Convenience wrapper so callers don't need to loop + look up matches
+ * themselves — mirrors totalNewScreensNeededForHs above.
+ */
+export function totalNewScreensSavingsFromHqStock(
+  screenTally: { brand: string; model: string; count: number }[],
+  hqStockScreens: { brand: string; model: string }[],
+): number {
+  return usefulHqStockScreens(screenTally, hqStockScreens).length * 2;
+}
+
+/**
+ * Same idea as combinedLeftoverForModel above, but also letting a
+ * matching HQ stock spare soak up the trip's stranded installed leftover
+ * for this model, on top of any agency-level known stock. Once the HQ
+ * spare is on its way to pair with that leftover, the leftover isn't
+ * "surplus with nowhere to go" any more — it's staying right where it is,
+ * joined by the incoming spare to form a working old-old pair — so it
+ * drops out of the "à récupérer" list, same as a leftover that pairs with
+ * agency-level stock already does.
+ *
+ * Only ever adds at most one unit on top of `stockCount`: HQ stock never
+ * holds more than one of a given model, and hqStockCanPairWithTripLeftover
+ * (checked against `installedCount` alone, same as everywhere else HQ
+ * stock is considered) confirms there's actually a stranded leftover for
+ * it to pair with before the bonus is applied at all.
+ */
+export function combinedLeftoverForModelWithHqStock(
+  installedCount: number,
+  stockCount: number,
+  brand: string,
+  model: string,
+  hqStockScreens: { brand: string; model: string }[],
+): number {
+  const matchesHqStock = hqStockScreens.some(
+    (screen) => normalizeForMatch(screen.brand) === normalizeForMatch(brand) && normalizeForMatch(screen.model) === normalizeForMatch(model),
+  );
+  const hqStockBonus = matchesHqStock && hqStockCanPairWithTripLeftover(installedCount, brand) ? 1 : 0;
+
+  return combinedLeftoverForModel(installedCount, stockCount + hqStockBonus, brand);
+}
