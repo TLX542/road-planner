@@ -39,7 +39,7 @@ export type AgencyMarker = {
   comment?: string;
 };
 
-export type AgencyClickMode = "visited" | "waypoint" | "comment";
+export type AgencyClickMode = "visited" | "waypoint" | "comment" | "edit";
 
 type TripMapProps = {
   routes: MapRoute[];
