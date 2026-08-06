@@ -102,6 +102,7 @@ body {
   width: 100%;
 }
 
+/* Top islands */
 .topIsland {
   position: absolute;
   top: 1rem;
@@ -302,7 +303,7 @@ body {
   border-color: var(--border);
 }
 
-label {
+.label {
   font-size: 0.85rem;
   color: var(--muted);
 }
@@ -451,20 +452,6 @@ button:focus-visible {
 .stopDragHandle[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.5;
-}
-
-.stopDragHandleIcon {
-  display: grid;
-  grid-template-columns: repeat(2, 3px);
-  grid-auto-rows: 3px;
-  gap: 3px;
-}
-
-.stopDragHandleIcon span {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: currentColor;
 }
 
 /* ---------- Address autocomplete ---------- */
@@ -619,7 +606,7 @@ input:disabled {
   margin-bottom: 0.5rem;
 }
 
-/* ---------- Inline "i" info button + popover (new-screens totals) ---------- */
+/* ---------- Inline "i" info button + popover (new-screens totals) ----------*/
 
 .tallyInfoRow {
   position: relative;
@@ -1309,10 +1296,18 @@ input:disabled {
 
   .sheetHandleBar {
     flex: 0 0 auto;
-    width: 2.25rem;
-    height: 0.28rem;
-    border-radius: 999px;
-    background: var(--border);
+    width: 4px;
+    height: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sheetHandleBar span {
+    width: 4px;
+    height: 4px;
+    background: currentColor;
+    border-radius: 50%;
+    display: block;
   }
 
   .sheetHandleLabel {
@@ -1369,4 +1364,33 @@ input:disabled {
   .islandHeader h1 {
     font-size: 1.1rem;
   }
+}
+
+/* Floating action button for calculate action on mobile */
+.calculate-fab {
+  position: fixed;
+  bottom: env(safe-area-inset-bottom, 0px);
+  right: 1rem;
+  width: 56px;
+  height: 56px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  border: none;
+  cursor: pointer;
+}
+
+.calculate-fab:hover:enabled {
+  background: var(--primary-strong);
+}
+
+.calculate-fab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

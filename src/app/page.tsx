@@ -1438,7 +1438,7 @@ export default function Home() {
             aria-expanded={mobileTallyOpen}
             onClick={() => setMobileTallyOpen((open) => !open)}
           >
-            <span className="sheetHandleBar" aria-hidden="true" />
+            <span className="sheetHandleBar" aria-hidden="true"><span></span><span></span><span></span></span>
             <span className="sheetHandleLabel">
               Écrans{totalNewScreens > 0 ? ` — ${totalNewScreens} neuf${totalNewScreens > 1 ? "s" : ""}` : ""}
             </span>
@@ -1632,7 +1632,7 @@ export default function Home() {
           aria-expanded={mobilePlannerOpen}
           onClick={() => setMobilePlannerOpen((open) => !open)}
         >
-          <span className="sheetHandleBar" aria-hidden="true" />
+          <span className="sheetHandleBar" aria-hidden="true"><span></span><span></span><span></span></span>
           <span className="sheetHandleLabel">Planifier</span>
         </button>
         <header className="islandHeader">
@@ -2088,6 +2088,24 @@ export default function Home() {
           </div>
         </div>
       ) : null}
+
+      {/* Floating Action Button for Calculate - Mobile only */}
+      {!mobilePlannerOpen && (
+        <button
+          className="calculate-fab"
+          type="button"
+          disabled={!canCalculate || trip.loading}
+          aria-label="Calculer l'itinéraire"
+          onClick={() => {
+            if (!trip.loading && canCalculate) {
+              void fetchTrip(trip.stops);
+              setMobilePlannerOpen(false);
+            }
+          }}
+        >
+          {trip.loading ? "⏳" : "🔍"}
+        </button>
+      )}
     </div>
   );
 }
