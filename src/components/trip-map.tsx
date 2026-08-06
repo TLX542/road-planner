@@ -63,6 +63,11 @@ type TripMapProps = {
   // non-HQ agency marker renders as one of these two photos instead of a
   // plain dot — still tinted per status so the map reads the same way.
   easterEggImages?: { marc: string; nicolas: string; tao: string } | null;
+  // True after a successful trip calculation, used to trigger a single
+  // recentering of the map to fit the new route.
+  justCalculated?: boolean;
+  // Callback to reset the justCalculated flag after recentering.
+  onJustCalculated?: () => void;
 };
 
 // Épinal is the head office, not just another agency — it gets its own
@@ -222,6 +227,8 @@ export function TripMap({
   agencyClickMode = "visited",
   onAgencyClick,
   easterEggImages = null,
+  justCalculated = false,
+  onJustCalculated,
 }: TripMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
@@ -447,6 +454,44 @@ export function TripMap({
     renderAgencyMarkers();
   }, [agencyMarkers, agencyClickMode, selectedAgencyIds, easterEggImages]);
 
+  // Center the map to fit the route after a successful trip calculation.
+  useEffect(() => {
+    if (!mapRef.current || !justCalculated) {
+      return;
+    }
+
+    (async () => {
+      const L = await import("leaflet");
+      const map = mapRef.current;
+      if (!map) return;
+
+      const stops = activeStops;
+      const routesList = routes;
+
+      const allLatLngs: [number, number][] = [];
+      routesList.forEach((route) => {
+        const latLngs = route.geometry.map((point) => [point.lat, point.lon] as [number, number]);
+        if (latLngs.length < 2) {
+          return;
+        }
+
+        allLatLngs.push(...latLngs);
+      });
+
+      const stopLatLngs = activeStops.map((stop) => [stop.lat, stop.lon] as [number, number]);
+      const boundsPoints = allLatLngs.length > 1 ? allLatLngs : stopLatLngs;
+
+      if (boundsPoints.length > 1) {
+        map.fitBounds(L.latLngBounds(boundsPoints), { padding: [32, 32] });
+      } else if (stopLatLngs.length > 0) {
+        map.fitBounds(L.latLngBounds(stopLatLngs), { padding: [32, 32], maxZoom: 11 });
+      }
+    })();
+
+    // Reset the flag so we don't center again until the next calculation.
+    onJustCalculated?.();
+  }, [justCalculated, onJustCalculated, activeStops, routes]);
+
   useEffect(() => {
     async function renderRoutes() {
       if (!mapRef.current || !routeLayerGroupRef.current || !stopLayerRef.current) {
@@ -492,18 +537,6 @@ export function TripMap({
           weight: 3,
         }).addTo(stopLayer);
       });
-
-      const stopLatLngs = activeStops.map((stop) => [stop.lat, stop.lon] as [number, number]);
-      const boundsPoints = allLatLngs.length > 1 ? allLatLngs : stopLatLngs;
-
-      if (boundsPoints.length > 1) {
-        map.fitBounds(L.latLngBounds(boundsPoints), { padding: [32, 32] });
-        return;
-      }
-
-      if (stopLatLngs.length > 0) {
-        map.fitBounds(L.latLngBounds(stopLatLngs), { padding: [32, 32], maxZoom: 11 });
-      }
     }
 
     renderRoutes();

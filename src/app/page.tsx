@@ -146,6 +146,8 @@ type EasterEggImages = { marc: string; nicolas: string; tao: string};
 
 export default function Home() {
   const [trip, setTrip] = useState<TripState>(() => createTrip());
+  const [justCalculated, setJustCalculated] = useState(false);
+  const handleJustCalculated = useCallback(() => setJustCalculated(false), []);
 
   const [theme, setTheme] = useState<Theme>("light");
 
@@ -1231,6 +1233,11 @@ export default function Home() {
           updating: false,
           error: "",
         }));
+
+        // Center the map after a successful, user-triggered trip calculation
+        if (!silent) {
+          setJustCalculated(true);
+        }
       } catch (submitError) {
         if (isStale()) {
           return;
@@ -1416,6 +1423,8 @@ export default function Home() {
           agencyClickMode={agencyClickMode}
           onAgencyClick={handleAgencyMarkerClick}
           easterEggImages={easterEggOn ? easterEggImages : null}
+          justCalculated={justCalculated}
+          onJustCalculated={handleJustCalculated}
         />
       </section>
 
